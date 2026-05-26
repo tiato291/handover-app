@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GM Handover Tracker</title>
+<style>
+:root {
+  --bg: #edf0f4;
+  --card: #ffffff;
+  --pri: #2a5c8a;
+  --pri-lite: #e6eef6;
+  --border: #d1d8e0;
+  --text: #1e2d3d;
+  --muted: #6b7a8d;
+  --sgoc-a: #1f6b6b; --sgoc-a-bg: #edf7f6; --sgoc-a-bd: #a8d0cc;
+  --sgoc-b: #2558a0; --sgoc-b-bg: #edf3fa; --sgoc-b-bd: #a8c4e4;
+  --sgoc-c: #8a6010; --sgoc-c-bg: #fdf7ed; --sgoc-c-bd: #e0c880;
+  --sgoc-d: #6a4878; --sgoc-d-bg: #f5eef9; --sgoc-d-bd: #c8b0d8;
+  --unst-bg: #fdecea; --unst-bd: #f0a8a0;
+  --cov-smo: #c53030; --cov-smo-bg: #fff5f5; --cov-smo-bd: #fc8181;
+  --cov-rmo: #8a6800; --cov-rmo-bg: #fffbeb; --cov-rmo-bd: #f0c830;
+  --cov-results: #2c5282; --cov-results-bg: #ebf8ff; --cov-results-bd: #90cdf4;
+  --cov-nojobs: #276749; --cov-nojobs-bg: #f0fff4; --cov-nojobs-bd: #9ae6b4;
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text); font-size: 13.5px; min-height: 100vh;
+}
+
+/* ---- APP BAR ---- */
+.app-bar {
+  background: var(--pri); color: #fff;
+  padding: 0 20px; height: 56px;
+  display: flex; align-items: center; gap: 10px;
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+.bar-left { display: flex; flex-direction: column; gap: 1px; flex: none; }
+.bar-title { font-size: 15px; font-weight: 700; letter-spacing: 0.2px; white-space: nowrap; }
+.bar-sub   { font-size: 11px; opacity: 0.68; }
+.bar-right { display: flex; align-items: center; gap: 8px; flex: none; }
+
+/* Team tabs — scrollable strip */
+.team-tabs {
+  display: flex; align-items: center; gap: 4px;
+  flex: 1 1 0; overflow-x: auto; min-width: 0;
+  scrollbar-width: none; padding: 0 4px;
+}
+.team-tabs::-webkit-scrollbar { display: none; }
+
+.team-tab {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 12px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.72);
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: inherit; white-space: nowrap;
+  transition: all 0.13s; flex-shrink: 0;
+}
+.team-tab:hover { background: rgba(255,255,255,0.2); color: #fff; }
+.team-tab.active { background: #fff; color: var(--pri); font-weight: 700; border-color: #fff; }
+
+/* Delete × on custom teams */
+.tdel {
+  display: none; font-size: 14px; line-height: 1;
+  color: rgba(255,255,255,0.45); cursor: pointer;
+  padding: 0 0 0 1px; transition: color 0.12s;
+}
+.team-tab:hover .tdel,
+.team-tab.active .tdel { display: inline; }
+.tdel:hover { color: rgba(255,120,120,1) !important; }
+.team-tab.active .tdel { color: rgba(42,92,138,0.4); }
+.team-tab.active .tdel:hover { color: #c0392b !important; }
+
+/* Inline rename input */
+.tname-inp {
+  background: transparent; border: none;
+  border-bottom: 1.5px solid rgba(255,255,255,0.6);
+  color: var(--pri); font-weight: 700; font-size: 12px;
+  font-family: inherit; outline: none; padding: 0;
+  min-width: 4ch; max-width: 18ch;
+}
+.team-tab:not(.active) .tname-inp {
+  color: rgba(255,255,255,0.9);
+  border-bottom-color: rgba(255,255,255,0.5);
+}
+
+/* New Team button */
+.btn-newteam {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 10px; border-radius: 6px;
+  border: 1px dashed rgba(255,255,255,0.32);
+  background: transparent; color: rgba(255,255,255,0.55);
+  font-size: 11px; font-weight: 500;
+  cursor: pointer; font-family: inherit; white-space: nowrap; flex-shrink: 0;
+  transition: all 0.13s;
+}
+.btn-newteam:hover { border-color: rgba(255,255,255,0.65); color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.1); }
+
+/* Print + Add buttons */
+.btn-print {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.82);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 6px; padding: 7px 12px;
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: inherit; transition: background 0.15s;
+}
+.btn-print:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+.btn-signout {
+  display: flex; align-items: center; gap: 5px;
+  background: transparent; color: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 6px; padding: 7px 12px;
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.btn-signout:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); }
+
+.btn-mode {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.9); color: var(--pri);
+  border: 1px solid rgba(255,255,255,0.9);
+  border-radius: 6px; padding: 7px 12px;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.btn-mode:hover { background: #fff; }
+.btn-mode.in-view {
+  background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.78);
+  border-color: rgba(255,255,255,0.22); font-weight: 500;
+}
+.btn-mode.in-view:hover { background: rgba(255,255,255,0.22); color: #fff; }
+
+.btn-add-pt {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.15); color: #fff;
+  border: 1px solid rgba(255,255,255,0.32);
+  border-radius: 6px; padding: 7px 14px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: background 0.15s;
+}
+.btn-add-pt:hover { background: rgba(255,255,255,0.26); }
+.btn-add-pt:active { transform: scale(0.97); }
+
+/* ---- FILTER BAR ---- */
+.filter-bar {
+  background: #fff; border-bottom: 1px solid var(--border);
+  padding: 0 24px; height: 44px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 56px; z-index: 49;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.filter-left { display: flex; align-items: center; gap: 6px; }
+.filter-lbl {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.9px; color: var(--muted); margin-right: 2px; white-space: nowrap;
+}
+.filter-btn {
+  padding: 4px 12px; border-radius: 14px;
+  border: 1.5px solid var(--border); background: #f5f6f8; color: var(--muted);
+  font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit;
+  transition: all 0.13s; white-space: nowrap;
+}
+.filter-btn:hover { background: var(--pri-lite); color: var(--pri); border-color: #b8d0e8; }
+.filter-btn.active { background: var(--pri); color: #fff; border-color: var(--pri); font-weight: 600; }
+.filter-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.filter-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.sort-sel {
+  font-family: inherit; font-size: 12px; color: var(--muted);
+  background: #f5f6f8; border: 1.5px solid var(--border);
+  border-radius: 6px; padding: 4px 8px; cursor: pointer; outline: none;
+  transition: border-color 0.13s;
+}
+.sort-sel:focus { border-color: var(--pri); color: var(--text); }
+
+/* ---- MAIN ---- */
+.main { padding: 20px 24px; max-width: 1440px; margin: 0 auto; }
+
+/* ---- EMPTY ---- */
+.empty { grid-column: 1/-1; text-align: center; padding: 72px 24px; color: var(--muted); }
+.empty svg { opacity: 0.32; margin-bottom: 16px; display: block; margin-left: auto; margin-right: auto; }
+.empty h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.empty p  { font-size: 13px; }
+
+/* ---- GRID ---- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); gap: 18px; }
+
+/* ---- CARD ---- */
+.card {
+  background: var(--card); border-radius: 10px; border: 1px solid var(--border);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  overflow: hidden; display: flex; flex-direction: column; transition: box-shadow 0.18s;
+}
+.card:hover { box-shadow: 0 5px 14px rgba(0,0,0,0.1); }
+
+
+.card-top {
+  padding: 12px 16px; display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 12px; border-bottom: 1px solid;
+  print-color-adjust: exact; -webkit-print-color-adjust: exact;
+}
+.card-top.sgoc-a { background: var(--sgoc-a-bg); border-color: var(--sgoc-a-bd); }
+.card-top.sgoc-b { background: var(--sgoc-b-bg); border-color: var(--sgoc-b-bd); }
+.card-top.sgoc-c { background: var(--sgoc-c-bg); border-color: var(--sgoc-c-bd); }
+.card-top.sgoc-d { background: var(--sgoc-d-bg); border-color: var(--sgoc-d-bd); }
+
+.pt-name-row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.pt-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pt-name.ph { color: var(--muted); font-weight: 400; font-style: italic; }
+.pt-demog { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+.pt-demog:empty { display: none; }
+.pt-meta { font-size: 11px; color: var(--muted); margin-top: 3px; font-family: 'SF Mono','Consolas','Menlo',monospace; letter-spacing: 0.3px; }
+.pt-sgoc-note { font-size: 11px; color: var(--text); margin-top: 3px; font-style: italic; opacity: 0.8; line-height: 1.4; }
+.pt-sgoc-note:empty { display: none; }
+
+.s-badge {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+  border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.2px;
+  white-space: nowrap; flex-shrink: 0;
+  print-color-adjust: exact; -webkit-print-color-adjust: exact;
+}
+.sgoc-none { background: #eef0f4; color: var(--muted); border: 1.5px solid var(--border); }
+.sgoc-a { background: var(--sgoc-a-bg); color: var(--sgoc-a); border: 1.5px solid var(--sgoc-a-bd); }
+.sgoc-b { background: var(--sgoc-b-bg); color: var(--sgoc-b); border: 1.5px solid var(--sgoc-b-bd); }
+.sgoc-c { background: var(--sgoc-c-bg); color: var(--sgoc-c); border: 1.5px solid var(--sgoc-c-bd); }
+.sgoc-d { background: var(--sgoc-d-bg); color: var(--sgoc-d); border: 1.5px solid var(--sgoc-d-bd); }
+
+/* Right-side badge column */
+.card-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+
+/* Coverage badge in header */
+.cov-badge {
+  display: inline-flex; align-items: center; padding: 4px 10px;
+  border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap;
+  letter-spacing: 0.1px;
+  print-color-adjust: exact; -webkit-print-color-adjust: exact;
+}
+.cov-badge.cov-none { display: none; }
+.cov-badge.cov-smo     { background: var(--cov-smo-bg);     color: var(--cov-smo);     border: 1.5px solid var(--cov-smo-bd); }
+.cov-badge.cov-rmo     { background: var(--cov-rmo-bg);     color: var(--cov-rmo);     border: 1.5px solid var(--cov-rmo-bd); }
+.cov-badge.cov-results { background: var(--cov-results-bg); color: var(--cov-results); border: 1.5px solid var(--cov-results-bd); }
+.cov-badge.cov-nojobs  { background: var(--cov-nojobs-bg);  color: var(--cov-nojobs);  border: 1.5px solid var(--cov-nojobs-bd); }
+
+/* Coverage selector — now lives in card header */
+.cov-hdr { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+.card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 11px; flex: 1; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.f { display: flex; flex-direction: column; gap: 3px; }
+
+/* Assessment + Background wrapper — 2-col in print */
+.print-row2 { display: flex; flex-direction: column; gap: 11px; }
+
+.lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.9px; color: var(--muted); }
+.inp {
+  font-family: inherit; font-size: 13.5px; color: var(--text);
+  background: transparent; border: none; border-bottom: 1.5px solid transparent;
+  padding: 2px 1px; width: 100%; outline: none; transition: border-color 0.15s;
+}
+.inp:focus { border-bottom-color: var(--pri); }
+.inp::placeholder { color: #c0c8d4; }
+textarea.inp { resize: none; overflow: hidden; min-height: 34px; line-height: 1.5; }
+.loc-row { display: flex; align-items: flex-end; gap: 6px; }
+.loc-sep { color: var(--muted); font-size: 11px; padding-bottom: 3px; flex-shrink: 0; }
+.ward-sel {
+  flex: 1.6; font-family: inherit; font-size: 13.5px; color: var(--text);
+  background: transparent; border: none; border-bottom: 1.5px solid transparent;
+  padding: 2px 1px; outline: none; transition: border-color 0.15s; cursor: pointer; min-width: 0;
+}
+.ward-sel:focus { border-bottom-color: var(--pri); }
+
+/* Shared dropdown style — coverage, SGOC, gender selects */
+.card-sel {
+  font-family: inherit; font-size: 13px; color: var(--text);
+  background: transparent; border: none; border-bottom: 1.5px solid transparent;
+  padding: 2px 1px; outline: none; transition: border-color 0.15s; cursor: pointer; width: 100%;
+}
+.card-sel:focus { border-bottom-color: var(--pri); }
+
+.hdiv { border: none; border-top: 1px solid var(--border); margin: 2px -16px 0; }
+
+.jobs-hdr { display: flex; align-items: center; justify-content: space-between; }
+.jobs-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.9px; color: var(--muted); }
+.btn-addjob {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--pri-lite); color: var(--pri); border: 1px solid #bdd0e6;
+  border-radius: 5px; padding: 3px 9px; font-size: 11px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: background 0.13s;
+}
+.btn-addjob:hover { background: #d4e6f5; }
+
+.jobs-list { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+.job {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 6px; border-radius: 6px; transition: background 0.1s;
+}
+.job:hover { background: #f5f6f8; }
+.job-cb { width: 14px; height: 14px; cursor: pointer; accent-color: var(--pri); flex-shrink: 0; }
+.job-inp {
+  flex: 1; font-family: inherit; font-size: 13px; color: var(--text);
+  background: transparent; border: none; outline: none; padding: 0;
+}
+.job-inp::placeholder { color: #c0c8d4; }
+textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-height: 1.5; }
+.job.done .job-inp { text-decoration: line-through; color: var(--muted); opacity: 0.5; }
+/* Print proxy — hidden on screen, shown instead of textarea when printing */
+.job-inp.job-pxy { display: none; }
+.job { align-items: flex-start; }
+.job-del {
+  background: none; border: none; cursor: pointer;
+  color: #ccc; font-size: 16px; line-height: 1; padding: 1px 3px; opacity: 0; transition: all 0.12s;
+}
+.job:hover .job-del { opacity: 1; }
+.job-del:hover { color: #c0392b; }
+
+.presets { display: flex; flex-wrap: wrap; gap: 5px; padding-top: 6px; }
+.pre-btn {
+  padding: 3px 9px; border-radius: 12px; border: 1px solid var(--border);
+  background: #f5f6f8; color: var(--muted); font-size: 11px; cursor: pointer; font-family: inherit;
+  transition: all 0.12s;
+}
+.pre-btn:hover { background: var(--pri-lite); color: var(--pri); border-color: #b8d0e8; }
+
+.card-foot {
+  padding: 10px 16px; border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; background: #fafbfc;
+}
+.btn-remove {
+  display: flex; align-items: center; gap: 5px;
+  background: none; color: #b04450; border: 1px solid #e8b0b8;
+  border-radius: 5px; padding: 4px 10px; font-size: 11px; font-weight: 500;
+  cursor: pointer; font-family: inherit; transition: all 0.12s;
+}
+.btn-remove:hover { background: var(--unst-bg); border-color: #f0a0a8; }
+
+/* ---- PRINT HEADER (hidden on screen) ---- */
+.print-header { display: none; }
+
+/* ---- VIEW MODE — lock all editable fields except job checkboxes ---- */
+body.view-mode .inp,
+body.view-mode .card-sel,
+body.view-mode .ward-sel,
+body.view-mode textarea.job-inp { pointer-events: none; }
+body.view-mode .no-print,
+body.view-mode .btn-addjob,
+body.view-mode .presets,
+body.view-mode .job-del,
+body.view-mode .card-foot,
+body.view-mode .btn-add-pt { display: none !important; }
+
+/* Fields already shown in card header — hidden when printing */
+@media print { .no-print { display: none !important; } }
+
+/* ================================================================
+   PRINT STYLES — compact, 4-5 patients per A4 page
+   ================================================================ */
+@media print {
+  @page { size: A4; margin: 10mm 10mm; }
+
+  .app-bar, .filter-bar, .sort-sel { display: none !important; }
+
+  .print-header {
+    display: block !important; margin-bottom: 8pt;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .ph-top  { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2pt; }
+  .ph-title{ font-size: 12pt; font-weight: 700; color: #1a2332; }
+  .ph-team { font-size: 10pt; font-weight: 600; color: #2a5c8a; }
+  .ph-meta { display: flex; justify-content: space-between; font-size: 7.5pt; color: #555; margin-bottom: 4pt; }
+  .ph-rule { border: none; border-top: 1.5pt solid #2a5c8a; }
+
+  body { background: #fff; color: #000; font-size: 8pt; line-height: 1.3; }
+  .main { padding: 0; max-width: 100%; }
+  .grid { display: block; }
+
+  .card {
+    break-inside: avoid; page-break-inside: avoid;
+    margin-bottom: 5pt;
+    box-shadow: none !important;
+    border: 0.6pt solid #b8c4d0 !important;
+    border-radius: 2pt !important;
+    print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important;
+  }
+  .card:hover { box-shadow: none !important; }
+
+  .card-top {
+    padding: 4pt 8pt !important;
+    print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important;
+  }
+  .pt-name { font-size: 9pt !important; font-weight: 700; white-space: normal !important; }
+  .pt-demog { font-size: 7.5pt !important; }
+  .pt-meta { font-size: 7pt !important; margin-top: 1pt; }
+  .pt-sgoc-note { font-size: 7pt !important; margin-top: 0.5pt; }
+  .s-badge, .cov-badge {
+    padding: 1.5pt 6pt !important; font-size: 7pt !important;
+    border-radius: 10pt !important;
+    print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important;
+  }
+  .cov-badge.cov-none { display: none !important; }
+
+  .card-body { padding: 4pt 8pt !important; gap: 2.5pt !important; }
+  .row2 { gap: 5pt !important; }
+
+  /* Assessment + Background side-by-side */
+  .print-row2 { display: grid !important; grid-template-columns: 1fr 1fr; gap: 5pt !important; }
+
+  .lbl { font-size: 6pt !important; letter-spacing: 0.4px !important; }
+  .inp {
+    font-size: 8pt !important; padding: 0 !important;
+    border-bottom-color: transparent !important;
+  }
+  textarea.inp {
+    overflow: visible !important; min-height: 0 !important;
+    white-space: pre-wrap !important; word-break: break-word;
+  }
+
+  .hdiv { margin: 1pt -8pt !important; }
+
+  .jobs-hdr { margin-bottom: 1pt; }
+  .jobs-lbl { font-size: 6pt !important; }
+  .jobs-list {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 1pt 8pt !important;
+    margin-top: 2pt !important;
+  }
+  .job { padding: 0.5pt 2pt !important; align-items: flex-start !important; }
+  .job-cb { width: 8pt !important; height: 8pt !important; flex-shrink: 0; margin-top: 1pt; }
+  /* Hide original textarea; proxy <div class="job-inp job-pxy"> shows full text */
+  textarea.job-inp { display: none !important; }
+  .job-inp.job-pxy {
+    display: block !important;
+    font-size: 7.5pt !important;
+    white-space: pre-wrap !important; word-break: break-word !important;
+    line-height: 1.3 !important;
+  }
+  .job.done .job-inp { text-decoration: line-through; color: #888; opacity: 1; }
+
+  /* Hide all interactive/edit UI */
+  .btn-addjob  { display: none !important; }
+  .presets     { display: none !important; }
+  .job-del     { display: none !important; }
+  .card-foot   { display: none !important; }
+
+  .loc-sep { font-size: 7pt !important; padding-bottom: 1pt; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-bar">
+  <div class="bar-left">
+    <div class="bar-title">General Medicine &mdash; Patient Handover</div>
+    <div class="bar-sub" id="barDate"></div>
+  </div>
+  <!-- Team tabs rendered by JS -->
+  <div id="teamTabs" class="team-tabs"></div>
+  <div class="bar-right">
+    <button class="btn-signout" id="signOutBtn" onclick="doSignOut()" style="display:none">Sign Out</button>
+    <button class="btn-mode" id="modeBtn" onclick="toggleMode()">Edit Mode</button>
+    <button class="btn-print" onclick="doPrint()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6,9 6,2 18,2 18,9"/>
+        <path d="M6,18H4a2,2,0,0,1-2-2v-5a2,2,0,0,1,2-2h16a2,2,0,0,1,2,2v5a2,2,0,0,1-2,2H18"/>
+        <rect x="6" y="14" width="12" height="8"/>
+      </svg>
+      Print
+    </button>
+    <button class="btn-add-pt" onclick="addPatient()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Patient
+    </button>
+  </div>
+</header>
+
+<div class="filter-bar">
+  <div class="filter-left">
+    <span class="filter-lbl">Coverage</span>
+    <button class="filter-btn active" data-filter="All"           onclick="setFilter('All')">All</button>
+    <button class="filter-btn"        data-filter="SMO Review"    onclick="setFilter('SMO Review')">SMO Review</button>
+    <button class="filter-btn"        data-filter="RMO Review"    onclick="setFilter('RMO Review')">RMO Review</button>
+    <button class="filter-btn"        data-filter="Results Chase" onclick="setFilter('Results Chase')">Results Chase</button>
+    <button class="filter-btn"        data-filter="No Jobs"       onclick="setFilter('No Jobs')">No Jobs</button>
+  </div>
+  <div class="filter-right">
+    <select class="sort-sel" id="sortSel" onchange="setSort(this.value)">
+      <option value="default">Sort: Default</option>
+      <option value="lastName">Last Name A–Z</option>
+      <option value="nhi">NHI A–Z</option>
+      <option value="bedspace">Bedspace</option>
+      <option value="coverage">Coverage</option>
+    </select>
+    <span class="filter-count" id="filterCount"></span>
+  </div>
+</div>
+
+<div class="print-header" id="printHeader"></div>
+
+<main class="main">
+  <div class="grid" id="grid"></div>
+</main>
+
+<script>
+const PRESETS = [
+  'Chase Bloods','Fluid Review','Fluid Balance','Med Review',
+  'Heart Rate Review','Blood Pressure Review','For MDT',
+  'Wound Review','Imaging Chase','Urine Output Check','Weekend Discharge'
+];
+const COV      = ['RMO Review','SMO Review','Results Chase','No Jobs'];
+const COV_SLUG  = { 'RMO Review':'rmo', 'SMO Review':'smo', 'Results Chase':'results', 'No Jobs':'nojobs' };
+const COV_ORDER = { 'SMO Review':0, 'RMO Review':1, 'Results Chase':2, 'No Jobs':3 };
+const WARDS    = ['CCU','Medical','Surgical','Pediatrics'];
+const WARD_ORDER = { CCU: 0, Medical: 1, Surgical: 2, Pediatrics: 3 };
+const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+
+let patients      = [];
+let nextPid       = 1;
+let teams         = [];
+let currentTeam   = localStorage.getItem('gm_cur_team') || 'team1';
+let currentFilter = 'All';
+let currentSort   = 'default';
+let editMode      = true;
+
+/* ---- TEAM DEFAULTS ---- */
+function defaultTeams() {
+  return [
+    { id:'team1', name:'Team Red',    fixed:true },
+    { id:'team2', name:'Team Green',  fixed:true },
+    { id:'team3', name:'Team Blue',   fixed:true },
+    { id:'team4', name:'Team Yellow', fixed:true }
+  ];
+}
+
+/* ---- SERVER DATA LAYER ---- */
+let serverData  = { teams: [], teamData: {} };
+let _saveTimer  = null;
+let _lastSaveMs = 0;
+
+/* Load current team's patients out of the in-memory serverData cache */
+function applyTeamData() {
+  const td = (serverData.teamData || {})[currentTeam] || { patients: [], nextPid: 1 };
+  patients = td.patients || [];
+  /* Derive nextPid from highest existing id so concurrent clients don't collide */
+  nextPid = patients.length ? Math.max(...patients.map(p => Number(p.id) || 0)) + 1 : 1;
+  normalizePatients();
+}
+
+function normalizePatients() {
+  patients.forEach(p => {
+    if (Array.isArray(p.coverage)) p.coverage = p.coverage[0] || '';
+    else if (p.coverage == null)   p.coverage = '';
+    if (p.sgoc        === undefined) p.sgoc        = '';
+    if (p.sgocNote    === undefined) p.sgocNote    = '';
+    if (p.age         === undefined) p.age         = '';
+    if (p.gender      === undefined) p.gender      = '';
+    if (p.genderOther === undefined) p.genderOther = '';
+    if (!p.ward) p.ward = 'Medical';
+  });
+}
+
+async function loadFromServer() {
+  try {
+    const res = await fetch('/api/data');
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    serverData = await res.json();
+    /* Show Sign Out button when auth is active (server returned real data, not dev bypass) */
+    const signOutBtn = document.getElementById('signOutBtn');
+    if (signOutBtn) signOutBtn.style.display = '';
+  } catch (e) {
+    console.warn('Could not load from server, starting empty:', e);
+    serverData = { teams: [], teamData: {} };
+  }
+
+  if (!serverData.teams || !serverData.teams.length) serverData.teams = defaultTeams();
+  teams = serverData.teams;
+
+  /* Guarantee all four fixed teams are always present */
+  defaultTeams().forEach((def, i) => {
+    if (!teams.find(t => t.id === def.id)) teams.splice(i, 0, def);
+  });
+
+  if (!teams.find(t => t.id === currentTeam)) {
+    currentTeam = 'team1';
+    localStorage.setItem('gm_cur_team', 'team1');
+  }
+
+  applyTeamData();
+}
+
+/* Debounced save — batches rapid keystrokes into a single request */
+function save() {
+  clearTimeout(_saveTimer);
+  updateCount();
+  _saveTimer = setTimeout(_doSave, 300);
+}
+
+function saveTeams() { save(); }
+
+async function _doSave() {
+  _lastSaveMs = Date.now();
+  if (!serverData.teamData) serverData.teamData = {};
+  serverData.teams = teams;
+  serverData.teamData[currentTeam] = { patients, nextPid };
+  try {
+    const res = await fetch('/api/data', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(serverData)
+    });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (!res.ok) console.error('Save failed: HTTP', res.status);
+  } catch (e) {
+    console.error('Save failed:', e);
+  }
+}
+
+async function doSignOut() {
+  try { await fetch('/api/logout', { method: 'POST' }); } catch (_) {}
+  window.location.href = '/login';
+}
+
+/* Sync — SSE when available (local server), polling fallback (Vercel serverless) */
+function initSync() {
+  const es = new EventSource('/api/events');
+  let opened = false;
+
+  es.addEventListener('open', () => { opened = true; });
+
+  es.onmessage = e => {
+    if (Date.now() - _lastSaveMs < 2000) return;
+    try {
+      const incoming = JSON.parse(e.data);
+      serverData = incoming;
+      teams = incoming.teams || defaultTeams();
+      defaultTeams().forEach((def, i) => {
+        if (!teams.find(t => t.id === def.id)) teams.splice(i, 0, def);
+      });
+      applyTeamData(); renderTeamTabs(); render();
+    } catch (err) { console.error('Sync error:', err); }
+  };
+
+  es.onerror = () => {
+    es.close();
+    if (!opened) {
+      /* /api/events doesn't exist (Vercel) — switch to polling */
+      startPolling();
+    } else {
+      /* SSE dropped — reconnect */
+      setTimeout(initSync, 3000);
+    }
+  };
+}
+
+let _pollTimer = null;
+function startPolling() {
+  if (_pollTimer) return;
+  _pollTimer = setInterval(async () => {
+    if (Date.now() - _lastSaveMs < 5000) return;
+    try {
+      const res = await fetch('/api/data');
+      if (res.status === 401) { window.location.href = '/login'; return; }
+      if (!res.ok) return;
+      if (Date.now() - _lastSaveMs < 2000) return;
+      const incoming = await res.json();
+      serverData = incoming;
+      teams = incoming.teams || defaultTeams();
+      defaultTeams().forEach((def, i) => {
+        if (!teams.find(t => t.id === def.id)) teams.splice(i, 0, def);
+      });
+      applyTeamData(); renderTeamTabs(); render();
+    } catch (_) { /* network blip, retry next tick */ }
+  }, 10000);
+}
+
+/* ---- TEAM TABS RENDERING ---- */
+function renderTeamTabs() {
+  const container = document.getElementById('teamTabs');
+  let html = teams.map(t => {
+    const isActive  = t.id === currentTeam;
+    const isDynamic = !t.fixed;
+    return '<button class="team-tab' + (isActive ? ' active' : '') + '"' +
+      ' onclick="handleTabClick(event,\'' + t.id + '\')">' +
+      '<span class="tname">' + h(t.name) + '</span>' +
+      (isDynamic
+        ? '<span class="tdel" onclick="event.stopPropagation();deleteTeam(\'' + t.id + '\')" title="Remove team">×</span>'
+        : '') +
+    '</button>';
+  }).join('');
+  html += '<button class="btn-newteam" onclick="createTeam()">' +
+    '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+    ' New Team' +
+  '</button>';
+  container.innerHTML = html;
+}
+
+/* Click on a team tab: if active → rename, else → switch */
+function handleTabClick(e, tid) {
+  if (currentTeam === tid) startRename(e.currentTarget, tid);
+  else switchTeam(tid);
+}
+
+/* Inline rename: replaces the name span with an input */
+function startRename(btn, tid) {
+  const nameSpan = btn.querySelector('.tname');
+  if (!nameSpan) return;
+  const team = teams.find(x => x.id === tid);
+  if (!team) return;
+  const orig = team.name;
+
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.value = orig;
+  inp.className = 'tname-inp';
+  inp.style.width = Math.max(orig.length + 2, 6) + 'ch';
+  nameSpan.replaceWith(inp);
+
+  function commit() {
+    const v = inp.value.trim();
+    if (v) team.name = v;
+    saveTeams();
+    renderTeamTabs();
+  }
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter')  { ev.preventDefault(); inp.blur(); }
+    if (ev.key === 'Escape') { team.name = orig; inp.blur(); }
+    inp.style.width = Math.max(inp.value.length + 2, 6) + 'ch';
+  });
+  inp.addEventListener('input', () => {
+    inp.style.width = Math.max(inp.value.length + 2, 6) + 'ch';
+  });
+  requestAnimationFrame(() => { inp.focus(); inp.select(); });
+}
+
+function createTeam() {
+  const name = prompt('New team name:');
+  if (!name || !name.trim()) return;
+  const id = 'dyn_' + Date.now();
+  teams.push({ id, name: name.trim(), fixed: false });
+  saveTeams();
+  switchTeam(id);
+}
+
+function deleteTeam(tid) {
+  const team = teams.find(t => t.id === tid);
+  if (!team || team.fixed) return;
+  if (!confirm('Delete "' + team.name + '"?\nAll patients in this team will be permanently removed.')) return;
+  delete serverData.teamData[tid];
+  teams = teams.filter(t => t.id !== tid);
+  save();
+  if (currentTeam === tid) {
+    currentTeam = 'team1';
+    localStorage.setItem('gm_cur_team', 'team1');
+    applyTeamData();
+  }
+  renderTeamTabs();
+  render();
+}
+
+/* ---- TEAMS ---- */
+function switchTeam(tid) {
+  if (!teams.find(t => t.id === tid)) return;
+  currentTeam   = tid;
+  currentFilter = 'All';
+  localStorage.setItem('gm_cur_team', tid);
+  applyTeamData();
+  renderTeamTabs();
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.className = 'filter-btn' + (b.dataset.filter === 'All' ? ' active' : '');
+  });
+  render();
+}
+
+/* ---- FILTER ---- */
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.className = 'filter-btn' + (b.dataset.filter === f ? ' active' : '');
+  });
+  render();
+}
+
+function getFiltered() {
+  if (currentFilter === 'All') return patients;
+  return patients.filter(p => p.coverage === currentFilter);
+}
+
+function updateCount() {
+  const total    = patients.length;
+  const filtered = getFiltered().length;
+  let txt;
+  if (currentFilter === 'All') {
+    txt = total === 0 ? '' : total === 1 ? '1 patient' : total + ' patients';
+  } else {
+    txt = filtered + ' of ' + total + ' patient' + (total !== 1 ? 's' : '');
+  }
+  document.getElementById('filterCount').textContent = txt;
+}
+
+/* ---- PRINT ---- */
+function doPrint() {
+  const team    = teams.find(t => t.id === currentTeam) || { name: 'Unknown Team' };
+  const now     = new Date();
+  const dateStr = DAYS[now.getDay()] + ', ' + now.getDate() + ' ' +
+                  MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+  const shown   = getFiltered().length;
+  const total   = patients.length;
+  const scope   = currentFilter === 'All'
+    ? total + ' patient' + (total !== 1 ? 's' : '')
+    : h(currentFilter) + ' only — ' + shown + ' of ' + total + ' patients';
+
+  document.getElementById('printHeader').innerHTML =
+    '<div class="ph-top">' +
+      '<span class="ph-title">General Medicine — Patient Handover</span>' +
+      '<span class="ph-team">' + h(team.name) + '</span>' +
+    '</div>' +
+    '<div class="ph-meta"><span>' + dateStr + '</span><span>' + scope + '</span></div>' +
+    '<hr class="ph-rule">';
+
+  window.print();
+}
+
+/* ---- PATIENTS ---- */
+function addPatient() {
+  const p = {
+    id: nextPid++,
+    firstName:'', lastName:'', age:'', gender:'', genderOther:'', nhi:'', ward:'Medical', bed:'',
+    diagnosis:'', sgoc:'', sgocNote:'', assessment:'', background:'',
+    coverage:'', jobs:[]
+  };
+  patients.push(p);
+  save();
+  render();
+  setTimeout(() => {
+    const card = qpid(p.id);
+    if (card) { const f = card.querySelector('.f-fn'); if (f) f.focus(); }
+  }, 40);
+}
+
+function removePatient(id) {
+  if (!confirm('Remove this patient from the handover list?')) return;
+  patients = patients.filter(p => p.id !== id);
+  save();
+  render();
+}
+
+function setField(id, key, val) {
+  const p = patients.find(x => x.id === id);
+  if (p) { p[key] = val; save(); }
+}
+
+function setSgocDd(id, val) {
+  const p = patients.find(x => x.id === id);
+  if (!p) return;
+  p.sgoc = val;
+  save();
+  const card = qpid(id);
+  if (!card) return;
+  card.querySelector('.card-top').className = 'card-top' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : '');
+  const badge = card.querySelector('.s-badge');
+  badge.className = 's-badge' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : ' sgoc-none');
+  badge.textContent = p.sgoc ? 'SGOC ' + p.sgoc : 'SGOC';
+}
+
+function refreshSgocNote(id) {
+  const p = patients.find(x => x.id === id), card = qpid(id);
+  if (!p || !card) return;
+  const noteEl = card.querySelector('.pt-sgoc-note');
+  if (noteEl) noteEl.textContent = p.sgocNote || '';
+}
+
+function setGenderDd(id, val) {
+  const p = patients.find(x => x.id === id);
+  if (!p) return;
+  p.gender = val;
+  save();
+  const card = qpid(id);
+  if (!card) return;
+  const otherInp = card.querySelector('.gender-other-inp');
+  if (otherInp) otherInp.style.display = (val === 'Other') ? 'block' : 'none';
+  refreshTop(id);
+}
+
+function setCoverage(id, val) {
+  const p = patients.find(x => x.id === id);
+  if (!p) return;
+  p.coverage = val;
+  save();
+  const card = qpid(id);
+  if (!card) return;
+  const slug = val ? (COV_SLUG[val] || '') : '';
+  card.className = 'card';
+  const covBadge = card.querySelector('.cov-badge');
+  if (covBadge) {
+    covBadge.className = 'cov-badge' + (slug ? ' cov-' + slug : ' cov-none');
+    covBadge.textContent = val || '';
+  }
+  updateCount();
+}
+
+function setSort(s) {
+  currentSort = s;
+  render();
+}
+
+function toggleMode() {
+  editMode = !editMode;
+  const btn = document.getElementById('modeBtn');
+  if (editMode) {
+    document.body.classList.remove('view-mode');
+    if (btn) { btn.textContent = 'Edit Mode'; btn.classList.remove('in-view'); }
+  } else {
+    document.body.classList.add('view-mode');
+    if (btn) { btn.textContent = 'View Mode'; btn.classList.add('in-view'); }
+  }
+}
+
+function getSorted(list) {
+  if (currentSort === 'default') return list;
+  const copy = list.slice();
+  if (currentSort === 'lastName') {
+    copy.sort((a, b) =>
+      (a.lastName || '').localeCompare(b.lastName || '') ||
+      (a.firstName || '').localeCompare(b.firstName || '')
+    );
+  } else if (currentSort === 'nhi') {
+    copy.sort((a, b) => (a.nhi || '').localeCompare(b.nhi || ''));
+  } else if (currentSort === 'bedspace') {
+    copy.sort((a, b) => {
+      const wa = WARD_ORDER[a.ward] ?? 99, wb = WARD_ORDER[b.ward] ?? 99;
+      if (wa !== wb) return wa - wb;
+      const ba = parseInt(a.bed, 10), bb = parseInt(b.bed, 10);
+      const na = isNaN(ba) ? Infinity : ba, nb = isNaN(bb) ? Infinity : bb;
+      return na - nb;
+    });
+  } else if (currentSort === 'coverage') {
+    copy.sort((a, b) => {
+      const ca = COV_ORDER[a.coverage] ?? 99, cb = COV_ORDER[b.coverage] ?? 99;
+      return ca - cb;
+    });
+  }
+  return copy;
+}
+
+/* ---- JOBS ---- */
+let _jid = Date.now();
+function newJid() { return ++_jid; }
+
+function addJob(pid, text) {
+  const p = patients.find(x => x.id === pid);
+  if (!p) return;
+  const job = { id: newJid(), text: text || '', done: false };
+  p.jobs.push(job);
+  save();
+  renderJobs(pid);
+  if (!text) {
+    setTimeout(() => {
+      const card = qpid(pid);
+      if (!card) return;
+      const all = card.querySelectorAll('.job-inp');
+      if (all.length) all[all.length - 1].focus();
+    }, 30);
+  }
+}
+
+function toggleJob(pid, jid) {
+  const p = patients.find(x => x.id === pid);
+  if (!p) return;
+  const j = p.jobs.find(x => x.id === jid);
+  if (!j) return;
+  j.done = !j.done;
+  save();
+  const el = document.querySelector('[data-jid="' + jid + '"]');
+  if (el) el.classList.toggle('done', j.done);
+}
+
+function updateJobText(pid, jid, text) {
+  const p = patients.find(x => x.id === pid);
+  if (!p) return;
+  const j = p.jobs.find(x => x.id === jid);
+  if (j) { j.text = text; save(); }
+}
+
+function deleteJob(pid, jid) {
+  const p = patients.find(x => x.id === pid);
+  if (!p) return;
+  p.jobs = p.jobs.filter(j => j.id !== jid);
+  save();
+  renderJobs(pid);
+}
+
+/* ---- HELPERS ---- */
+function qpid(pid) { return document.querySelector('[data-pid="' + pid + '"]'); }
+
+function h(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function genderLabel(p) {
+  if (!p.gender) return '';
+  return p.gender === 'Other' ? (p.genderOther || 'Other') : p.gender;
+}
+
+function refreshTop(pid) {
+  const p = patients.find(x => x.id === pid), card = qpid(pid);
+  if (!p || !card) return;
+  const full   = [p.firstName, p.lastName].filter(Boolean).join(' ');
+  const nameEl = card.querySelector('.pt-name');
+  if (full) { nameEl.className = 'pt-name'; nameEl.textContent = full; }
+  else       { nameEl.className = 'pt-name ph'; nameEl.textContent = 'New Patient'; }
+  card.querySelector('.pt-demog').textContent = (p.age || '') + genderLabel(p);
+  card.querySelector('.pt-meta').textContent =
+    'NHI: ' + (p.nhi || '—') + '   •   ' + (p.ward || 'Ward') + '  Bed ' + (p.bed || '—');
+}
+
+function autoH(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+
+/* ---- RENDER ---- */
+function jobHTML(pid, j) {
+  return '<div class="job' + (j.done ? ' done' : '') + '" data-jid="' + j.id + '">' +
+    '<input type="checkbox" class="job-cb"' + (j.done ? ' checked' : '') +
+      ' onchange="toggleJob(' + pid + ',' + j.id + ')">' +
+    '<textarea class="job-inp" rows="1" placeholder="Enter task..."' +
+      ' oninput="updateJobText(' + pid + ',' + j.id + ',this.value);autoH(this)"' +
+      ' onfocus="autoH(this)">' + h(j.text) + '</textarea>' +
+    '<button class="job-del" onclick="deleteJob(' + pid + ',' + j.id + ')" title="Remove">×</button>' +
+  '</div>';
+}
+
+function renderJobs(pid) {
+  const card = qpid(pid);
+  if (!card) return;
+  const p = patients.find(x => x.id === pid);
+  if (!p) return;
+  card.querySelector('.jobs-list').innerHTML = p.jobs.map(j => jobHTML(pid, j)).join('');
+}
+
+function cardHTML(p) {
+  const full  = [p.firstName, p.lastName].filter(Boolean).join(' ');
+  const demog = (p.age || '') + genderLabel(p);
+  const covSlug = p.coverage ? (COV_SLUG[p.coverage] || '') : '';
+  return (
+    '<div class="card" data-pid="' + p.id + '">' +
+    '<div class="card-top' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : '') + '">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div class="pt-name-row">' +
+          '<div class="' + (full ? 'pt-name' : 'pt-name ph') + '">' + h(full || 'New Patient') + '</div>' +
+          '<span class="pt-demog">' + h(demog) + '</span>' +
+        '</div>' +
+        '<div class="pt-meta">NHI: ' + h(p.nhi || '—') + '   •   ' + h(p.ward || 'Ward') + '  Bed ' + h(p.bed || '—') + '</div>' +
+        '<div class="pt-sgoc-note">' + h(p.sgocNote || '') + '</div>' +
+        '<div class="cov-hdr no-print">' +
+          '<select class="card-sel" onchange="setCoverage(' + p.id + ',this.value)">' +
+            '<option value="">— Weekend Coverage —</option>' +
+            COV.map(o => '<option value="' + h(o) + '"' + (p.coverage === o ? ' selected' : '') + '>' + h(o) + '</option>').join('') +
+          '</select>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card-badges">' +
+        '<span class="s-badge' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : ' sgoc-none') + '">' +
+          (p.sgoc ? 'SGOC ' + p.sgoc : 'SGOC') +
+        '</span>' +
+        '<span class="cov-badge' + (covSlug ? ' cov-' + covSlug : ' cov-none') + '">' +
+          h(p.coverage || '') +
+        '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="card-body">' +
+      '<div class="row2 no-print">' +
+        '<div class="f"><span class="lbl">First Name</span>' +
+          '<input class="inp f-fn" type="text" value="' + h(p.firstName) + '" placeholder="First name"' +
+          ' oninput="setField(' + p.id + ',\'firstName\',this.value);refreshTop(' + p.id + ')">' +
+        '</div>' +
+        '<div class="f"><span class="lbl">Last Name</span>' +
+          '<input class="inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
+          ' oninput="setField(' + p.id + ',\'lastName\',this.value);refreshTop(' + p.id + ')">' +
+        '</div>' +
+      '</div>' +
+      '<div class="row2 no-print">' +
+        '<div class="f"><span class="lbl">Age</span>' +
+          '<input class="inp" type="number" min="0" max="150" value="' + h(p.age) + '" placeholder="—"' +
+          ' oninput="setField(' + p.id + ',\'age\',this.value);refreshTop(' + p.id + ')">' +
+        '</div>' +
+        '<div class="f"><span class="lbl">Gender</span>' +
+          '<select class="card-sel" onchange="setGenderDd(' + p.id + ',this.value)">' +
+            '<option value="">—</option>' +
+            '<option value="M"' + (p.gender === 'M' ? ' selected' : '') + '>Male</option>' +
+            '<option value="F"' + (p.gender === 'F' ? ' selected' : '') + '>Female</option>' +
+            '<option value="Other"' + (p.gender === 'Other' ? ' selected' : '') + '>Other</option>' +
+          '</select>' +
+          '<input class="inp gender-other-inp" type="text" value="' + h(p.genderOther || '') + '" placeholder="Please specify..."' +
+            ' style="display:' + (p.gender === 'Other' ? 'block' : 'none') + ';margin-top:4px"' +
+            ' oninput="setField(' + p.id + ',\'genderOther\',this.value);refreshTop(' + p.id + ')">' +
+        '</div>' +
+      '</div>' +
+      '<div class="row2 no-print">' +
+        '<div class="f"><span class="lbl">NHI Number</span>' +
+          '<input class="inp" type="text" value="' + h(p.nhi) + '" placeholder="ABC1234" maxlength="8" style="text-transform:uppercase"' +
+          ' oninput="this.value=this.value.toUpperCase();setField(' + p.id + ',\'nhi\',this.value);refreshTop(' + p.id + ')">' +
+        '</div>' +
+        '<div class="f"><span class="lbl">Location</span>' +
+          '<div class="loc-row">' +
+            '<select class="ward-sel" onchange="setField(' + p.id + ',\'ward\',this.value);refreshTop(' + p.id + ')">' +
+              WARDS.map(w => '<option value="' + w + '"' + (p.ward === w ? ' selected' : '') + '>' + w + '</option>').join('') +
+            '</select>' +
+            '<span class="loc-sep">Bed</span>' +
+            '<input class="inp" type="text" value="' + h(p.bed) + '" placeholder="00" style="flex:0.8"' +
+            ' oninput="setField(' + p.id + ',\'bed\',this.value);refreshTop(' + p.id + ')">' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="f"><span class="lbl">Diagnosis</span>' +
+        '<input class="inp" type="text" value="' + h(p.diagnosis) + '" placeholder="Current working diagnosis"' +
+        ' oninput="setField(' + p.id + ',\'diagnosis\',this.value)">' +
+      '</div>' +
+      '<div class="f no-print"><span class="lbl">Shared Goals of Care (SGOC)</span>' +
+        '<select class="card-sel" onchange="setSgocDd(' + p.id + ',this.value)">' +
+          '<option value="">—</option>' +
+          ['A','B','C','D'].map(l =>
+            '<option value="' + l + '"' + (p.sgoc === l ? ' selected' : '') + '>SGOC ' + l + '</option>'
+          ).join('') +
+        '</select>' +
+      '</div>' +
+      '<div class="f no-print"><span class="lbl">SGOC Comment</span>' +
+        '<input class="inp" type="text" value="' + h(p.sgocNote || '') + '" placeholder="Additional comment..."' +
+        ' oninput="setField(' + p.id + ',\'sgocNote\',this.value);refreshSgocNote(' + p.id + ')">' +
+      '</div>' +
+      /* Assessment + Background — side by side in print via .print-row2 */
+      '<div class="print-row2">' +
+        '<div class="f"><span class="lbl">Assessment / Clinical Notes</span>' +
+          '<textarea class="inp" rows="2" placeholder="Current assessment and clinical status..."' +
+          ' oninput="setField(' + p.id + ',\'assessment\',this.value);autoH(this)"' +
+          ' onfocus="autoH(this)">' + h(p.assessment) + '</textarea>' +
+        '</div>' +
+        '<div class="f"><span class="lbl">Background / PMHx</span>' +
+          '<textarea class="inp" rows="2" placeholder="Past medical history, relevant background..."' +
+          ' oninput="setField(' + p.id + ',\'background\',this.value);autoH(this)"' +
+          ' onfocus="autoH(this)">' + h(p.background) + '</textarea>' +
+        '</div>' +
+      '</div>' +
+      '<hr class="hdiv">' +
+      '<div>' +
+        '<div class="jobs-hdr">' +
+          '<span class="jobs-lbl">Jobs List</span>' +
+          '<button class="btn-addjob" onclick="addJob(' + p.id + ')">' +
+            '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">' +
+            '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+            'Add Job' +
+          '</button>' +
+        '</div>' +
+        '<div class="jobs-list">' + p.jobs.map(j => jobHTML(p.id, j)).join('') + '</div>' +
+        '<div class="presets">' +
+          PRESETS.map(pr =>
+            '<button class="pre-btn" onclick="addJob(' + p.id + ',\'' + h(pr) + '\')">' + h(pr) + '</button>'
+          ).join('') +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="card-foot">' +
+      '<button class="btn-remove" onclick="removePatient(' + p.id + ')">' +
+        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+        '<polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14H6L5,6"/>' +
+        '<path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4h6v2"/></svg>' +
+        'Remove Patient' +
+      '</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function render() {
+  const toShow = getSorted(getFiltered());
+  const grid   = document.getElementById('grid');
+
+  if (!patients.length) {
+    grid.innerHTML =
+      '<div class="empty">' +
+        '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>' +
+          '<path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' +
+        '</svg>' +
+        '<h3>No patients on the list</h3>' +
+        '<p>Click <strong>Add Patient</strong> to begin the handover</p>' +
+      '</div>';
+  } else if (!toShow.length) {
+    grid.innerHTML =
+      '<div class="empty">' +
+        '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">' +
+          '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>' +
+        '</svg>' +
+        '<h3>No patients match this filter</h3>' +
+        '<p>No patients have <strong>' + h(currentFilter) + '</strong> coverage selected.</p>' +
+      '</div>';
+  } else {
+    grid.innerHTML = toShow.map(p => cardHTML(p)).join('');
+  }
+
+  updateCount();
+  setTimeout(() => document.querySelectorAll('textarea').forEach(autoH), 10);
+}
+
+/* ---- INIT ---- */
+(async function() {
+  const now = new Date();
+  document.getElementById('barDate').textContent =
+    DAYS[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+
+  await loadFromServer();
+  renderTeamTabs();
+  render();
+  initSync();
+
+  window.addEventListener('beforeprint', () => {
+    /* Job textareas always clip their content regardless of overflow CSS —
+       replace each with a <div> proxy that naturally flows to full height. */
+    document.querySelectorAll('textarea.job-inp').forEach(ta => {
+      const d = document.createElement('div');
+      d.className = 'job-inp job-pxy';
+      d.textContent = ta.value;
+      ta.insertAdjacentElement('afterend', d);
+    });
+    /* Assessment / background textareas: stamp explicit height so print CSS cannot override. */
+    document.querySelectorAll('textarea.inp').forEach(el => {
+      el.style.height = 'auto';
+      el.style.setProperty('height', el.scrollHeight + 'px', 'important');
+    });
+  });
+  window.addEventListener('afterprint', () => {
+    document.querySelectorAll('.job-pxy').forEach(d => d.remove());
+    document.querySelectorAll('textarea.inp').forEach(el => {
+      el.style.removeProperty('height');
+      autoH(el);
+    });
+  });
+})();
+</script>
+</body>
+</html>

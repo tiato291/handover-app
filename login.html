@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — GM Handover</title>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #edf0f4; min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+}
+.card {
+  background: #fff; border-radius: 14px;
+  box-shadow: 0 4px 28px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+  padding: 44px 40px; width: 100%; max-width: 390px;
+}
+.logo { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+.logo-mark {
+  width: 44px; height: 44px; background: #2a5c8a; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.logo-title { font-size: 16px; font-weight: 700; color: #1e2d3d; line-height: 1.2; }
+.logo-sub   { font-size: 12px; color: #6b7a8d; margin-top: 2px; }
+
+.field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 18px; }
+.field label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: #6b7a8d;
+}
+.pw-wrap { position: relative; }
+.pw-wrap input {
+  width: 100%; padding: 11px 40px 11px 13px;
+  border: 1.5px solid #d1d8e0; border-radius: 8px;
+  font-family: inherit; font-size: 14px; color: #1e2d3d;
+  outline: none; transition: border-color 0.15s; background: #fff;
+}
+.pw-wrap input:focus { border-color: #2a5c8a; }
+.pw-toggle {
+  position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: #9aa8b8;
+  padding: 2px; line-height: 1; transition: color 0.12s;
+}
+.pw-toggle:hover { color: #2a5c8a; }
+
+.btn {
+  width: 100%; padding: 12px; background: #2a5c8a; color: #fff;
+  border: none; border-radius: 8px; font-family: inherit;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s; margin-top: 4px;
+}
+.btn:hover   { background: #1e4a72; }
+.btn:active  { transform: scale(0.98); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.error {
+  margin-top: 14px; padding: 11px 13px;
+  background: #fff5f5; border: 1.5px solid #fc8181; border-radius: 8px;
+  font-size: 13px; color: #c53030; display: none;
+}
+.error.show { display: block; }
+.footer {
+  margin-top: 28px; padding-top: 20px; border-top: 1px solid #edf0f4;
+  font-size: 11px; color: #9aa8b8; text-align: center; line-height: 1.5;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-title">GM Handover</div>
+      <div class="logo-sub">General Medicine — Patient Handover</div>
+    </div>
+  </div>
+
+  <form id="form">
+    <div class="field">
+      <label for="pwd">Ward Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="pwd" autocomplete="current-password"
+               placeholder="Enter ward password" autofocus>
+        <button type="button" class="pw-toggle" id="toggle" title="Show / hide">
+          <svg id="eyeIcon" width="17" height="17" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <button type="submit" class="btn" id="btn">Sign In</button>
+    <div class="error" id="err"></div>
+  </form>
+
+  <div class="footer">
+    Access is restricted to authorised ward staff.<br>
+    Contact your team lead if you need the password.
+  </div>
+</div>
+
+<script>
+const form   = document.getElementById('form');
+const pwdInp = document.getElementById('pwd');
+const btn    = document.getElementById('btn');
+const err    = document.getElementById('err');
+const toggle = document.getElementById('toggle');
+
+toggle.addEventListener('click', () => {
+  pwdInp.type = pwdInp.type === 'password' ? 'text' : 'password';
+});
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  err.classList.remove('show');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwdInp.value })
+    });
+    if (res.ok) {
+      window.location.href = '/';
+    } else {
+      err.textContent = 'Incorrect password. Please try again.';
+      err.classList.add('show');
+      pwdInp.value = '';
+      pwdInp.focus();
+    }
+  } catch {
+    err.textContent = 'Network error — please check your connection.';
+    err.classList.add('show');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Sign In';
+});
+</script>
+</body>
+</html>
