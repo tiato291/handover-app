@@ -1,8 +1,6 @@
 'use strict';
-const { createClient } = require('@supabase/supabase-js');
+const supabase = require('../lib/supabase');
 
-// No auth required — safe to expose because it only reveals
-// whether vars are set (never their values) and DB connectivity.
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
@@ -12,12 +10,8 @@ module.exports = async function handler(req, res) {
   const report = {
     timestamp: new Date().toISOString(),
     env: {
-      SUPABASE_URL: url
-        ? 'set (' + url.slice(0, 12) + '…)'
-        : 'MISSING',
-      SUPABASE_SERVICE_ROLE_KEY: key
-        ? 'set (length=' + key.length + ')'
-        : 'MISSING',
+      SUPABASE_URL: url ? 'set (' + url.slice(0, 12) + '…)' : 'MISSING',
+      SUPABASE_SERVICE_ROLE_KEY: key ? 'set (length=' + key.length + ')' : 'MISSING',
       WARD_PASSWORD: process.env.WARD_PASSWORD ? 'set' : 'not set — open access',
       NODE_ENV: process.env.NODE_ENV || '(not set)',
     },
@@ -30,10 +24,8 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const sb = createClient(url, key);
-
-    // 1. Check the store table exists and is readable
-    const { data, error } = await sb
+    // Read test
+    const { data, error } = await supabase
       .from('store')
       .select('key, updated_at')
       .eq('key', 'handover-v1')
@@ -41,28 +33,30 @@ module.exports = async function handler(req, res) {
 
     if (error) {
       report.supabase = { ok: false, error: error.message, code: error.code, hint: error.hint };
-    } else if (!data) {
-      report.supabase = { ok: true, note: 'table reachable but no row yet — app has not saved yet' };
     } else {
-      report.supabase = { ok: true, key: data.key, last_saved: data.updated_at };
+      report.supabase = data
+        ? { ok: true, key: data.key, last_saved: data.updated_at }
+        : { ok: true, note: 'table reachable — no row yet (app has not saved yet)' };
     }
 
-    // 2. Quick write test — write then immediately read back
+    // Write test — upsert a throwaway row then delete it
     const testKey = '__healthcheck__';
-    const { error: writeErr } = await sb
+    const { error: writeErr } = await supabase
       .from('store')
-      .upsert({ key: testKey, value: { ping: true }, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      .upsert(
+        { key: testKey, value: { ping: true }, updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
 
     if (writeErr) {
       report.supabase.write_test = { ok: false, error: writeErr.message, code: writeErr.code };
     } else {
-      // Clean up
-      await sb.from('store').delete().eq('key', testKey);
+      await supabase.from('store').delete().eq('key', testKey);
       report.supabase.write_test = { ok: true };
     }
   } catch (e) {
     report.supabase = { ok: false, error: e.message };
   }
 
-  res.status(200).json(report);
+  return res.status(200).json(report);
 };
