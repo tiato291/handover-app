@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "General Medicine Patient Handover",
   "scripts": {
-    "start": "node server.js"
+    "dev": "node server.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.0.0"
