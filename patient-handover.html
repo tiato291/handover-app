@@ -350,7 +350,139 @@ body.view-mode .btn-addjob,
 body.view-mode .presets,
 body.view-mode .job-del,
 body.view-mode .card-foot,
-body.view-mode .btn-add-pt { display: none !important; }
+body.view-mode .btn-add-pt,
+body.view-mode .btn-clear-all { display: none !important; }
+
+/* ---- CLEAR ALL BUTTON ---- */
+.btn-clear-all {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(180,30,30,0.18); color: #ffb3b3;
+  border: 1px solid rgba(255,100,100,0.35);
+  border-radius: 6px; padding: 7px 12px;
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.btn-clear-all:hover { background: rgba(200,40,40,0.32); color: #ffd0d0; border-color: rgba(255,120,120,0.6); }
+
+/* ---- CLEAR ALL MODAL ---- */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.52); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  padding: 28px 28px 24px; max-width: 420px; width: 90%;
+}
+.modal-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: #fff0f0; border: 2px solid #f8c0c0;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px;
+}
+.modal-title {
+  font-size: 16px; font-weight: 700; color: #1e2d3d;
+  text-align: center; margin-bottom: 8px;
+}
+.modal-warn {
+  font-size: 13px; color: #6b7a8d; text-align: center;
+  line-height: 1.55; margin-bottom: 20px;
+}
+.modal-warn strong { color: #c0392b; }
+.modal-inp-lbl {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: #6b7a8d; display: block; margin-bottom: 6px;
+}
+.modal-inp {
+  width: 100%; font-family: 'SF Mono','Consolas','Menlo',monospace;
+  font-size: 14px; font-weight: 600; letter-spacing: 1px;
+  padding: 9px 12px; border: 1.5px solid #d1d8e0;
+  border-radius: 7px; outline: none; color: #1e2d3d;
+  transition: border-color 0.15s;
+}
+.modal-inp:focus { border-color: #c0392b; }
+.modal-inp.valid { border-color: #c0392b; background: #fff5f5; }
+.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+.modal-btn-cancel {
+  flex: 1; padding: 9px; border-radius: 7px;
+  border: 1.5px solid #d1d8e0; background: #f5f6f8;
+  color: #6b7a8d; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: all 0.13s;
+}
+.modal-btn-cancel:hover { background: #edf0f4; color: #1e2d3d; }
+.modal-btn-confirm {
+  flex: 1; padding: 9px; border-radius: 7px;
+  border: none; background: #c0392b;
+  color: #fff; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all 0.13s;
+}
+.modal-btn-confirm:disabled {
+  background: #e8b0b8; cursor: not-allowed; opacity: 0.7;
+}
+.modal-btn-confirm:not(:disabled):hover { background: #a93226; }
+
+/* ---- IMPORT BUTTON ---- */
+.btn-import {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.82);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 6px; padding: 7px 12px;
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: inherit; transition: background 0.15s;
+}
+.btn-import:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+/* ---- IMPORT MODAL ---- */
+.import-modal-box {
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  padding: 28px 28px 24px; max-width: 500px; width: 92%;
+}
+.import-modal-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--pri-lite); border: 2px solid #bdd0e6;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px;
+}
+.import-stats {
+  font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 4px;
+}
+.import-stats strong { color: var(--text); }
+.import-preview-list {
+  max-height: 210px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: #f8f9fb; padding: 6px 8px;
+  margin: 12px 0 4px;
+}
+.import-preview-item {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  padding: 5px 4px; border-radius: 5px; font-size: 12.5px;
+}
+.import-preview-item:hover { background: rgba(42,92,138,0.06); }
+.import-preview-name { font-weight: 600; color: var(--text); white-space: nowrap; }
+.import-preview-meta { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.import-preview-more { text-align: center; color: var(--muted); font-size: 11px; padding: 6px 0 2px; }
+.import-action-question {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.7px; color: var(--muted); margin: 16px 0 8px;
+}
+.import-action-btns { display: flex; gap: 10px; }
+.import-btn-add {
+  flex: 1; padding: 10px 8px; border-radius: 7px;
+  border: 1.5px solid var(--pri); background: var(--pri-lite);
+  color: var(--pri); font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all 0.13s; text-align: center;
+}
+.import-btn-add:hover { background: var(--pri); color: #fff; }
+.import-btn-replace {
+  flex: 1; padding: 10px 8px; border-radius: 7px;
+  border: 1.5px solid #c8821c; background: #fdf5e8;
+  color: #b87318; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all 0.13s; text-align: center;
+}
+.import-btn-replace:hover { background: #c8821c; color: #fff; }
 
 /* Fields already shown in card header — hidden when printing */
 @media print { .no-print { display: none !important; } }
@@ -460,6 +592,13 @@ body.view-mode .btn-add-pt { display: none !important; }
   <!-- Team tabs rendered by JS -->
   <div id="teamTabs" class="team-tabs"></div>
   <div class="bar-right">
+    <button class="btn-clear-all" onclick="openClearModal()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14H6L5,6"/>
+        <path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4h6v2"/>
+      </svg>
+      Clear All
+    </button>
     <button class="btn-signout" id="signOutBtn" onclick="doSignOut()" style="display:none">Sign Out</button>
     <button class="btn-mode" id="modeBtn" onclick="toggleMode()">Edit Mode</button>
     <button class="btn-print" onclick="doPrint()">
@@ -469,6 +608,15 @@ body.view-mode .btn-add-pt { display: none !important; }
         <rect x="6" y="14" width="12" height="8"/>
       </svg>
       Print
+    </button>
+    <input type="file" id="importFileInput" accept=".csv,text/csv" style="display:none" onchange="handleImportFile(this)">
+    <button class="btn-import" onclick="triggerImport()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      Import CSV
     </button>
     <button class="btn-add-pt" onclick="addPatient()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -500,6 +648,56 @@ body.view-mode .btn-add-pt { display: none !important; }
 
 <div class="print-header" id="printHeader"></div>
 
+<!-- Clear All Patients Modal -->
+<div class="modal-overlay" id="clearModal" onclick="handleModalOverlayClick(event)">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="clearModalTitle">
+    <div class="modal-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </div>
+    <div class="modal-title" id="clearModalTitle">Clear All Patients</div>
+    <div class="modal-warn">
+      This will <strong>permanently delete all patients</strong> on this team list.<br>
+      This cannot be undone.
+    </div>
+    <label class="modal-inp-lbl" for="clearConfirmInp">Type DELETE to confirm</label>
+    <input class="modal-inp" id="clearConfirmInp" type="text" autocomplete="off"
+      placeholder="DELETE" oninput="onClearInputChange(this)">
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" onclick="closeClearModal()">Cancel</button>
+      <button class="modal-btn-confirm" id="clearConfirmBtn" disabled onclick="confirmClearAll()">
+        Delete All Patients
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Import from CSV Modal -->
+<div class="modal-overlay" id="importModal" onclick="handleImportOverlayClick(event)">
+  <div class="import-modal-box" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
+    <div class="import-modal-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--pri)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    </div>
+    <div class="modal-title" id="importModalTitle">Import from CSV</div>
+    <div class="import-stats" id="importStats"></div>
+    <div class="import-preview-list" id="importPreviewList"></div>
+    <div class="import-action-question">What would you like to do?</div>
+    <div class="import-action-btns">
+      <button class="import-btn-add" id="importAddBtn" onclick="doImport(false)"></button>
+      <button class="import-btn-replace" id="importReplaceBtn" onclick="doImport(true)"></button>
+    </div>
+    <div class="modal-btns" style="margin-top:10px">
+      <button class="modal-btn-cancel" style="width:100%" onclick="closeImportModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <main class="main">
   <div class="grid" id="grid"></div>
 </main>
@@ -513,8 +711,8 @@ const PRESETS = [
 const COV      = ['RMO Review','SMO Review','Results Chase','No Jobs'];
 const COV_SLUG  = { 'RMO Review':'rmo', 'SMO Review':'smo', 'Results Chase':'results', 'No Jobs':'nojobs' };
 const COV_ORDER = { 'SMO Review':0, 'RMO Review':1, 'Results Chase':2, 'No Jobs':3 };
-const WARDS    = ['CCU','Medical','Surgical','Pediatrics'];
-const WARD_ORDER = { CCU: 0, Medical: 1, Surgical: 2, Pediatrics: 3 };
+const WARDS    = ['CCU','AT&R','Medical','Surgical','Pediatrics'];
+const WARD_ORDER = { CCU: 0, 'AT&R': 1, Medical: 2, Surgical: 3, Pediatrics: 4 };
 const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const MONTHS = ['January','February','March','April','May','June',
                 'July','August','September','October','November','December'];
@@ -1208,6 +1406,192 @@ function render() {
   setTimeout(() => document.querySelectorAll('textarea').forEach(autoH), 10);
 }
 
+/* ---- CSV IMPORT ---- */
+let _pendingImport = [];
+
+function triggerImport() {
+  const inp = document.getElementById('importFileInput');
+  inp.value = '';
+  inp.click();
+}
+
+function handleImportFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const rows = parseCSV(e.target.result);
+    _pendingImport = rows.map(csvRowToPatient).filter(p => p.firstName || p.lastName || p.nhi);
+    if (!_pendingImport.length) {
+      alert('No valid patient rows found in the CSV. Check that the file has the expected column headers.');
+      return;
+    }
+    showImportPreview();
+  };
+  reader.readAsText(file);
+}
+
+function parseCSV(text) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  if (!lines.length) return [];
+
+  function parseLine(line) {
+    const fields = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (inQ) {
+        if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+        else if (c === '"') { inQ = false; }
+        else { cur += c; }
+      } else {
+        if (c === '"') { inQ = true; }
+        else if (c === ',') { fields.push(cur.trim()); cur = ''; }
+        else { cur += c; }
+      }
+    }
+    fields.push(cur.trim());
+    return fields;
+  }
+
+  const headers = parseLine(lines[0]).map(h => h.toLowerCase().replace(/[()]/g, '').trim());
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const fields = parseLine(lines[i]);
+    const row = {};
+    headers.forEach((hdr, idx) => { row[hdr] = (fields[idx] || '').trim(); });
+    rows.push(row);
+  }
+  return rows;
+}
+
+function csvRowToPatient(row) {
+  const sex = (row['sex'] || '').toUpperCase();
+  let gender = '';
+  if (sex === 'M' || sex === 'MALE')        gender = 'M';
+  else if (sex === 'F' || sex === 'FEMALE') gender = 'F';
+
+  const wardRaw = (row['ward'] || '').trim();
+  const WH_WARD_MAP = {
+    'wh critical care unit': 'CCU',
+    'wh acute stroke unit':  'AT&R',
+    'wh medical ward':       'Medical',
+    'wh surgical ward':      'Surgical'
+  };
+  const ward = WH_WARD_MAP[wardRaw.toLowerCase()]
+    || WARDS.find(w => w.toLowerCase() === wardRaw.toLowerCase())
+    || 'Medical';
+
+  return {
+    id:          null,
+    firstName:   (row['given name']  || '').trim(),
+    lastName:    (row['family name'] || '').trim(),
+    age:         (row['age']         || '').trim(),
+    gender,
+    genderOther: '',
+    nhi:         (row['nhi']         || '').trim().toUpperCase(),
+    ward:        ward || 'Medical',
+    bed:         (row['bed']         || '').trim(),
+    diagnosis:   '',
+    sgoc:        '',
+    sgocNote:    '',
+    assessment:  '',
+    background:  '',
+    coverage:    '',
+    jobs:        []
+  };
+}
+
+function showImportPreview() {
+  const count    = _pendingImport.length;
+  const existing = patients.length;
+
+  document.getElementById('importStats').innerHTML =
+    '<strong>' + count + ' patient' + (count !== 1 ? 's' : '') + '</strong> found in CSV';
+
+  const MAX_PREVIEW = 10;
+  let html = _pendingImport.slice(0, MAX_PREVIEW).map(p => {
+    const name  = [p.firstName, p.lastName].filter(Boolean).join(' ') || '(no name)';
+    const parts = [];
+    if (p.nhi)  parts.push('NHI: ' + p.nhi);
+    if (p.ward) parts.push(p.ward);
+    if (p.bed)  parts.push('Bed ' + p.bed);
+    return '<div class="import-preview-item">' +
+      '<span class="import-preview-name">' + h(name) + '</span>' +
+      '<span class="import-preview-meta">' + h(parts.join(' · ')) + '</span>' +
+    '</div>';
+  }).join('');
+  if (count > MAX_PREVIEW) {
+    html += '<div class="import-preview-more">and ' + (count - MAX_PREVIEW) + ' more&hellip;</div>';
+  }
+  document.getElementById('importPreviewList').innerHTML = html;
+
+  document.getElementById('importAddBtn').textContent =
+    'Add to existing' + (existing ? ' (' + existing + ' patient' + (existing !== 1 ? 's' : '') + ')' : '');
+  document.getElementById('importReplaceBtn').textContent =
+    existing
+      ? 'Replace all ' + existing + ' patient' + (existing !== 1 ? 's' : '')
+      : 'Import as new list';
+
+  document.getElementById('importModal').classList.add('open');
+}
+
+function closeImportModal() {
+  document.getElementById('importModal').classList.remove('open');
+  _pendingImport = [];
+}
+
+function handleImportOverlayClick(e) {
+  if (e.target === document.getElementById('importModal')) closeImportModal();
+}
+
+function doImport(replace) {
+  if (replace) {
+    patients = [];
+    nextPid  = 1;
+  }
+  _pendingImport.forEach(p => {
+    p.id = nextPid++;
+    patients.push(p);
+  });
+  save();
+  render();
+  closeImportModal();
+}
+
+/* ---- CLEAR ALL MODAL ---- */
+function openClearModal() {
+  const inp = document.getElementById('clearConfirmInp');
+  inp.value = '';
+  document.getElementById('clearConfirmBtn').disabled = true;
+  inp.classList.remove('valid');
+  document.getElementById('clearModal').classList.add('open');
+  requestAnimationFrame(() => inp.focus());
+}
+
+function closeClearModal() {
+  document.getElementById('clearModal').classList.remove('open');
+}
+
+function handleModalOverlayClick(e) {
+  if (e.target === document.getElementById('clearModal')) closeClearModal();
+}
+
+function onClearInputChange(inp) {
+  const valid = inp.value === 'DELETE';
+  inp.classList.toggle('valid', valid);
+  document.getElementById('clearConfirmBtn').disabled = !valid;
+}
+
+function confirmClearAll() {
+  patients = [];
+  nextPid  = 1;
+  save();
+  render();
+  closeClearModal();
+}
+
 /* ---- INIT ---- */
 (async function() {
   const now = new Date();
@@ -1218,6 +1602,13 @@ function render() {
   renderTeamTabs();
   render();
   initSync();
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (document.getElementById('clearModal').classList.contains('open'))  closeClearModal();
+      if (document.getElementById('importModal').classList.contains('open')) closeImportModal();
+    }
+  });
 
   window.addEventListener('beforeprint', () => {
     /* Job textareas always clip their content regardless of overflow CSS —
