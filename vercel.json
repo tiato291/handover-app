@@ -1,6 +1,4 @@
 {
-  "buildCommand": "",
-  "outputDirectory": ".",
   "rewrites": [
     { "source": "/login", "destination": "/login.html" },
     { "source": "/",      "destination": "/patient-handover.html" }
