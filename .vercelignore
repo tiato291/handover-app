@@ -1,8 +1,0 @@
-# Local development server — Vercel must NOT see this or it routes
-# all requests through it instead of using the api/ functions.
-server.js
-
-# Local-only files
-data.json
-node.exe
-start.bat

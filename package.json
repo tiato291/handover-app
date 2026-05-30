@@ -1,14 +1,5 @@
 {
-  "name": "gm-patient-handover",
-  "version": "1.0.0",
-  "description": "General Medicine Patient Handover",
-  "scripts": {
-    "dev": "node server.js"
-  },
   "dependencies": {
     "@supabase/supabase-js": "^2.0.0"
-  },
-  "engines": {
-    "node": ">=18"
   }
 }
