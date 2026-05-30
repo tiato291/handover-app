@@ -484,6 +484,14 @@ body.view-mode .btn-clear-all { display: none !important; }
 }
 .import-btn-replace:hover { background: #c8821c; color: #fff; }
 
+/* Replace confirmation modal — team name chip */
+.replace-team-name {
+  display: inline-block;
+  font-weight: 700; color: var(--pri);
+  background: var(--pri-lite); border: 1.5px solid #bdd0e6;
+  padding: 1px 9px; border-radius: 5px; white-space: nowrap;
+}
+
 /* Fields already shown in card header — hidden when printing */
 @media print { .no-print { display: none !important; } }
 
@@ -690,10 +698,33 @@ body.view-mode .btn-clear-all { display: none !important; }
     <div class="import-action-question">What would you like to do?</div>
     <div class="import-action-btns">
       <button class="import-btn-add" id="importAddBtn" onclick="doImport(false)"></button>
-      <button class="import-btn-replace" id="importReplaceBtn" onclick="doImport(true)"></button>
+      <button class="import-btn-replace" id="importReplaceBtn" onclick="openReplaceConfirmModal()"></button>
     </div>
     <div class="modal-btns" style="margin-top:10px">
       <button class="modal-btn-cancel" style="width:100%" onclick="closeImportModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Replace Confirmation Modal -->
+<div class="modal-overlay" id="replaceConfirmModal" onclick="handleReplaceConfirmOverlay(event)">
+  <div class="modal-box" role="dialog" aria-modal="true">
+    <div class="modal-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </div>
+    <div class="modal-title">Replace All Patients?</div>
+    <div class="modal-warn" style="margin-bottom:0">
+      This will replace all patients in
+      <span id="replaceConfirmTeamName" class="replace-team-name"></span>.<br><br>
+      Other teams will not be affected.<br>
+      <strong>This cannot be undone.</strong>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" onclick="closeReplaceConfirmModal()">Cancel</button>
+      <button class="modal-btn-confirm" onclick="doReplaceConfirmed()">Confirm Replace</button>
     </div>
   </div>
 </div>
@@ -1547,6 +1578,7 @@ function handleImportOverlayClick(e) {
 }
 
 function doImport(replace) {
+  // replace only ever touches the current team — other teams stay in serverData.teamData untouched
   if (replace) {
     patients = [];
     nextPid  = 1;
@@ -1558,6 +1590,25 @@ function doImport(replace) {
   save();
   render();
   closeImportModal();
+}
+
+function openReplaceConfirmModal() {
+  const team = teams.find(t => t.id === currentTeam);
+  document.getElementById('replaceConfirmTeamName').textContent = team ? team.name : 'this team';
+  document.getElementById('replaceConfirmModal').classList.add('open');
+}
+
+function closeReplaceConfirmModal() {
+  document.getElementById('replaceConfirmModal').classList.remove('open');
+}
+
+function handleReplaceConfirmOverlay(e) {
+  if (e.target === document.getElementById('replaceConfirmModal')) closeReplaceConfirmModal();
+}
+
+function doReplaceConfirmed() {
+  closeReplaceConfirmModal();
+  doImport(true);
 }
 
 /* ---- CLEAR ALL MODAL ---- */
@@ -1605,8 +1656,9 @@ function confirmClearAll() {
 
   window.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      if (document.getElementById('clearModal').classList.contains('open'))  closeClearModal();
-      if (document.getElementById('importModal').classList.contains('open')) closeImportModal();
+      if (document.getElementById('clearModal').classList.contains('open'))         closeClearModal();
+      if (document.getElementById('replaceConfirmModal').classList.contains('open')) closeReplaceConfirmModal();
+      if (document.getElementById('importModal').classList.contains('open'))         closeImportModal();
     }
   });
 
