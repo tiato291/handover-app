@@ -13,8 +13,8 @@ module.exports = async function handler(req, res) {
       .eq('key', KEY)
       .maybeSingle();
     if (error) {
-      console.error('Supabase read error:', error);
-      return res.status(503).json({ error: 'Storage unavailable.' });
+      console.error('Supabase read error:', error.message, error.code);
+      return res.status(503).json({ error: 'Storage unavailable.', detail: error.message });
     }
     return res.status(200).json(data?.value ?? { teams: [], teamData: {} });
   }
@@ -22,10 +22,13 @@ module.exports = async function handler(req, res) {
   if (req.method === 'POST') {
     const { error } = await supabase
       .from('store')
-      .upsert({ key: KEY, value: req.body, updated_at: new Date().toISOString() });
+      .upsert(
+        { key: KEY, value: req.body, updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
     if (error) {
-      console.error('Supabase write error:', error);
-      return res.status(503).json({ error: 'Storage write failed.' });
+      console.error('Supabase write error:', error.message, error.code);
+      return res.status(503).json({ error: 'Storage write failed.', detail: error.message });
     }
     return res.status(200).json({ ok: true });
   }
