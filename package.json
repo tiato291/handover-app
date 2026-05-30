@@ -1,8 +1,7 @@
 {
   "name": "gm-patient-handover",
   "version": "1.0.0",
-  "description": "General Medicine Patient Handover — local Node.js server",
-  "main": "server.js",
+  "description": "General Medicine Patient Handover",
   "scripts": {
     "start": "node server.js"
   },
