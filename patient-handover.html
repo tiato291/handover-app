@@ -698,6 +698,93 @@ body.view-mode .btn-clear-all { display: none !important; }
 
   .loc-sep { font-size: 7pt !important; padding-bottom: 1pt; }
 }
+
+/* ---- JOBS COUNTER IN HEADER ---- */
+.pt-hdr-jobs { font-size: 11px; font-weight: 500; color: var(--muted); margin-top: 3px; }
+.pt-hdr-jobs:empty { display: none; }
+.pt-hdr-jobs.all-done { color: var(--cov-nojobs); font-weight: 600; }
+
+/* ---- JOB TIMESTAMP ---- */
+.job-time {
+  font-size: 11px; color: var(--muted); white-space: nowrap; flex-shrink: 0;
+  font-family: 'SF Mono','Consolas','Menlo',monospace; margin-left: 2px;
+}
+
+/* ---- CARD COLLAPSE ---- */
+.btn-collapse-card {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 13px; padding: 0 4px 0 0;
+  line-height: 1; transition: transform 0.2s, color 0.15s;
+  flex-shrink: 0; opacity: 0.55;
+}
+.btn-collapse-card:hover { opacity: 1; color: var(--text); }
+.card.collapsed .btn-collapse-card { transform: rotate(-90deg); }
+.card.collapsed .card-body { display: none; }
+
+/* ---- SEARCH BAR ---- */
+.search-inp {
+  font-family: inherit; font-size: 12px; color: var(--text);
+  padding: 4px 10px; border: 1.5px solid var(--border);
+  border-radius: 14px; outline: none; background: #f5f6f8;
+  width: 180px; transition: border-color 0.15s, background 0.15s;
+}
+.search-inp:focus { border-color: var(--pri); background: #fff; }
+.search-inp::placeholder { color: var(--muted); }
+
+/* ---- LAST UPDATED ---- */
+.bar-updated { font-size: 10px; opacity: 0.52; white-space: nowrap; margin-top: 1px; }
+
+/* ---- DARK MODE BUTTON ---- */
+.btn-darkmode {
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 6px; padding: 6px 9px; cursor: pointer; font-size: 15px;
+  line-height: 1; transition: background 0.15s; color: inherit;
+}
+.btn-darkmode:hover { background: rgba(255,255,255,0.22); }
+
+/* ---- DARK MODE ---- */
+body.dark-mode {
+  --bg: #111827; --card: #1f2937;
+  --pri: #60a5fa; --pri-lite: #1e3a5f;
+  --border: #374151; --text: #f3f4f6; --muted: #9ca3af;
+  --sgoc-a: #34d399; --sgoc-a-bg: #064e3b; --sgoc-a-bd: #065f46;
+  --sgoc-b: #60a5fa; --sgoc-b-bg: #1e3a5f; --sgoc-b-bd: #1d4ed8;
+  --sgoc-c: #fbbf24; --sgoc-c-bg: #451a03; --sgoc-c-bd: #78350f;
+  --sgoc-d: #c084fc; --sgoc-d-bg: #3b0764; --sgoc-d-bd: #6d28d9;
+  --unst-bg: #450a0a; --unst-bd: #7f1d1d;
+  --cov-smo: #fca5a5; --cov-smo-bg: #450a0a; --cov-smo-bd: #7f1d1d;
+  --cov-rmo: #fcd34d; --cov-rmo-bg: #451a03; --cov-rmo-bd: #78350f;
+  --cov-results: #93c5fd; --cov-results-bg: #1e3a5f; --cov-results-bd: #1d4ed8;
+  --cov-nojobs: #6ee7b7; --cov-nojobs-bg: #064e3b; --cov-nojobs-bd: #065f46;
+}
+body.dark-mode .app-bar        { background: #0f172a; }
+body.dark-mode .filter-bar     { background: #1f2937; border-color: var(--border); }
+body.dark-mode .modal-box,
+body.dark-mode .import-modal-box { background: #1f2937; }
+body.dark-mode .modal-title    { color: var(--text); }
+body.dark-mode .modal-warn     { color: var(--muted); }
+body.dark-mode .modal-btn-cancel { background: #374151; border-color: var(--border); color: var(--muted); }
+body.dark-mode .modal-btn-cancel:hover { background: #4b5563; color: var(--text); }
+body.dark-mode .modal-inp      { background: #374151; border-color: var(--border); color: var(--text); }
+body.dark-mode .modal-inp:focus { border-color: var(--pri); }
+body.dark-mode .modal-sel      { background: #374151; border-color: var(--border); color: var(--text); }
+body.dark-mode .sort-sel       { background: #374151; border-color: var(--border); color: var(--text); }
+body.dark-mode .search-inp     { background: #374151; border-color: var(--border); color: var(--text); }
+body.dark-mode .search-inp:focus { background: #4b5563; border-color: var(--pri); }
+body.dark-mode .pre-btn        { background: #374151; border-color: var(--border); color: var(--muted); }
+body.dark-mode .pre-btn:hover  { background: var(--pri-lite); color: var(--pri); border-color: var(--pri); }
+body.dark-mode .filter-btn     { background: #374151; border-color: var(--border); color: var(--muted); }
+body.dark-mode .filter-btn:hover { background: var(--pri-lite); color: var(--pri); border-color: var(--pri); }
+body.dark-mode .filter-btn.active { background: var(--pri); color: #fff; border-color: var(--pri); }
+body.dark-mode .job:hover      { background: #374151; }
+body.dark-mode .pt-dropdown    { background: #1f2937; border-color: var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+body.dark-mode .pt-dropdown button { color: var(--text); }
+body.dark-mode .pt-dropdown button:hover { background: var(--pri-lite); color: var(--pri); }
+body.dark-mode .import-preview-list { background: #374151; border-color: var(--border); }
+body.dark-mode .hdr-sgoc-sel.sgoc-none,
+body.dark-mode .hdr-cov-sel.cov-none { background: #374151; color: var(--muted); border-color: var(--border); }
+body.dark-mode .team-tab { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.14); }
+body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
 </style>
 </head>
 <body>
@@ -706,9 +793,11 @@ body.view-mode .btn-clear-all { display: none !important; }
   <div class="bar-left">
     <div class="bar-title">General Medicine &mdash; Patient Handover</div>
     <div class="bar-sub" id="barDate"></div>
+    <div class="bar-updated" id="lastUpdated"></div>
   </div>
   <div id="teamTabs" class="team-tabs"></div>
   <div class="bar-right">
+    <button class="btn-darkmode" id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
     <button class="btn-clear-all" onclick="openClearModal()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14H6L5,6"/>
@@ -752,6 +841,7 @@ body.view-mode .btn-clear-all { display: none !important; }
     <button class="filter-btn"        data-filter="No Jobs"       onclick="setFilter('No Jobs')">No Jobs</button>
   </div>
   <div class="filter-right">
+    <input type="search" id="searchInp" class="search-inp no-print" placeholder="Search name or NHI…" oninput="setSearch(this.value)" autocomplete="off">
     <select class="sort-sel" id="sortSel" onchange="setSort(this.value)">
       <option value="default">Sort: Default</option>
       <option value="lastName">Last Name A–Z</option>
@@ -925,8 +1015,10 @@ let _moveToTeam      = null;
 let _deleteTargetPid = null;
 
 let _lastSaveMs        = 0;
+let _lastUpdateMs      = Date.now();
 const _saveTimers      = {};
 let _autoRefreshTimer  = null;
+let searchQuery        = '';
 
 /* ---- HELPERS ---- */
 function newPid() {
@@ -1057,6 +1149,7 @@ async function loadFromServer() {
     }
     patients = getTeamPatients(currentTeam);
     normalizePatients();
+    _lastUpdateMs = Date.now();
   } catch(e) {
     console.warn('Could not load from server:', e);
     teams = defaultTeams();
@@ -1133,6 +1226,8 @@ async function doAutoRefresh() {
     }
     patients = getTeamPatients(currentTeam);
     normalizePatients();
+    _lastUpdateMs = Date.now();
+    updateLastUpdatedText();
     renderTeamTabs();
     render();
   } catch(e) { /* network blip */ }
@@ -1144,9 +1239,11 @@ function renderTeamTabs() {
   let html = teams.map(t => {
     const isActive  = t.id === currentTeam;
     const isDynamic = !t.fixed;
+    const count     = (allPatients[t.id] || []).length;
+    const countStr  = count > 0 ? ' <span style="opacity:0.65;font-weight:400">(' + count + ')</span>' : '';
     return '<button class="team-tab' + (isActive ? ' active' : '') + '"' +
       ' onclick="handleTabClick(event,\'' + t.id + '\')">' +
-      '<span class="tname">' + h(t.name) + '</span>' +
+      '<span class="tname">' + h(t.name) + countStr + '</span>' +
       (isDynamic
         ? '<span class="tdel" onclick="event.stopPropagation();deleteTeam(\'' + t.id + '\')" title="Remove team">&times;</span>'
         : '') +
@@ -1237,7 +1334,15 @@ function setFilter(f) {
 }
 
 function getFiltered() {
-  return currentFilter === 'All' ? patients : patients.filter(p => p.coverage === currentFilter);
+  let list = currentFilter === 'All' ? patients : patients.filter(p => p.coverage === currentFilter);
+  if (searchQuery) {
+    const q = searchQuery;
+    list = list.filter(p => {
+      const name = ((p.firstName || '') + ' ' + (p.lastName || '')).toLowerCase();
+      return name.includes(q) || (p.nhi || '').toLowerCase().includes(q);
+    });
+  }
+  return list;
 }
 
 function updateCount() {
@@ -1407,15 +1512,19 @@ function toggleJob(pid, jid) {
   if (!p) return;
   const j = p.jobs.find(x => x.id === jid);
   if (!j) return;
-  pushUndo({ type: 'toggle_job', pid, teamId: p.teamId, jid, prevDone: j.done });
+  pushUndo({ type: 'toggle_job', pid, teamId: p.teamId, jid, prevDone: j.done, prevCompletedAt: j.completedAt });
   j.done = !j.done;
+  if (j.done) { j.completedAt = Date.now(); } else { delete j.completedAt; }
   savePatient(pid);
   const el = document.querySelector('[data-jid="' + jid + '"]');
   if (el) {
     el.classList.toggle('done', j.done);
     const cb = el.querySelector('.job-cb');
     if (cb) cb.checked = j.done;
+    const timeEl = el.querySelector('.job-time');
+    if (timeEl) timeEl.textContent = j.done && j.completedAt ? ' ✅ ' + fmtCompletedAt(j.completedAt) : '';
   }
+  updateJobsCounter(pid);
 }
 
 function updateJobText(pid, jid, text) {
@@ -1607,13 +1716,18 @@ async function performUndo() {
         const j = p.jobs.find(x => x.id === action.jid);
         if (j) {
           j.done = action.prevDone;
+          if (action.prevDone && action.prevCompletedAt) { j.completedAt = action.prevCompletedAt; }
+          else { delete j.completedAt; }
           savePatient(action.pid);
           const el = document.querySelector('[data-jid="' + action.jid + '"]');
           if (el) {
             el.classList.toggle('done', j.done);
             const cb = el.querySelector('.job-cb');
             if (cb) cb.checked = j.done;
+            const timeEl = el.querySelector('.job-time');
+            if (timeEl) timeEl.textContent = j.done && j.completedAt ? ' ✅ ' + fmtCompletedAt(j.completedAt) : '';
           }
+          updateJobsCounter(action.pid);
         }
       }
       break;
@@ -1679,12 +1793,14 @@ function autoH(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight
 
 /* ---- RENDER ---- */
 function jobHTML(pid, j) {
+  const ts = j.done && j.completedAt ? ' ✅ ' + fmtCompletedAt(j.completedAt) : '';
   return '<div class="job' + (j.done ? ' done' : '') + '" data-jid="' + j.id + '">' +
     '<input type="checkbox" class="job-cb"' + (j.done ? ' checked' : '') +
       ' onchange="toggleJob(\'' + pid + '\',' + j.id + ')">' +
     '<textarea class="job-inp" rows="1" placeholder="Enter task..."' +
       ' oninput="updateJobText(\'' + pid + '\',' + j.id + ',this.value);autoH(this)"' +
       ' onfocus="autoH(this)">' + h(j.text) + '</textarea>' +
+    '<span class="job-time">' + h(ts) + '</span>' +
     '<button class="job-del" onclick="deleteJob(\'' + pid + '\',' + j.id + ')" title="Remove">&times;</button>' +
   '</div>';
 }
@@ -1695,6 +1811,7 @@ function renderJobs(pid) {
   const p = findPatient(pid);
   if (!p) return;
   card.querySelector('.jobs-list').innerHTML = p.jobs.map(j => jobHTML(pid, j)).join('');
+  updateJobsCounter(pid);
 }
 
 function cardHTML(p) {
@@ -1707,6 +1824,7 @@ function cardHTML(p) {
       '<div class="card-top-left">' +
         /* ── Row 1: Names + Age + Gender ── */
         '<div class="pt-hdr-main">' +
+          '<button class="btn-collapse-card no-print" onclick="collapseCard(\'' + pid + '\')" title="Collapse/expand">&#9660;</button>' +
           '<input class="hdr-inp hdr-name-inp f-fn" type="text" value="' + h(p.firstName) + '" placeholder="First name"' +
             ' oninput="setField(\'' + pid + '\',\'firstName\',this.value)">' +
           '<input class="hdr-inp hdr-name-inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
@@ -1740,6 +1858,9 @@ function cardHTML(p) {
           '</span>' +
         '</div>' +
         '<div class="pt-sgoc-note">' + h(p.sgocNote || '') + '</div>' +
+        '<div class="pt-hdr-jobs' + (p.jobs.length > 0 && p.jobs.filter(j=>j.done).length === p.jobs.length ? ' all-done' : '') + '" id="jc-' + pid + '">' +
+          (p.jobs.length > 0 ? p.jobs.filter(j=>j.done).length + '/' + p.jobs.length + ' done' : '') +
+        '</div>' +
       '</div>' +
       '<div class="card-badges">' +
         '<select class="hdr-sgoc-sel' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : ' sgoc-none') + '" onchange="setSgocDd(\'' + pid + '\',this.value)">' +
@@ -1762,10 +1883,6 @@ function cardHTML(p) {
       '<div class="f"><span class="lbl">Diagnosis</span>' +
         '<input class="inp" type="text" value="' + h(p.diagnosis) + '" placeholder="Current working diagnosis"' +
         ' oninput="setField(\'' + pid + '\',\'diagnosis\',this.value)">' +
-      '</div>' +
-      '<div class="f no-print"><span class="lbl">SGOC Comment</span>' +
-        '<input class="inp" type="text" value="' + h(p.sgocNote || '') + '" placeholder="Additional comment..."' +
-        ' oninput="setField(\'' + pid + '\',\'sgocNote\',this.value);refreshSgocNote(\'' + pid + '\')">' +
       '</div>' +
       '<div class="print-row2">' +
         '<div class="f"><span class="lbl">Assessment / Clinical Notes</span>' +
@@ -2000,6 +2117,50 @@ function confirmClearAll() {
   render(); closeClearModal();
 }
 
+/* ---- NEW FEATURE HELPERS ---- */
+function fmtCompletedAt(ts) {
+  const d = new Date(ts);
+  const hh = d.getHours().toString().padStart(2,'0');
+  const mm = d.getMinutes().toString().padStart(2,'0');
+  const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+  return hh + ':' + mm + ' ' + day;
+}
+
+function updateJobsCounter(pid) {
+  const el = document.getElementById('jc-' + pid);
+  if (!el) return;
+  const p = findPatient(pid);
+  if (!p) return;
+  const total = p.jobs.length;
+  const done  = p.jobs.filter(j => j.done).length;
+  el.textContent = total > 0 ? done + '/' + total + ' done' : '';
+  el.className   = 'pt-hdr-jobs' + (total > 0 && done === total ? ' all-done' : '');
+}
+
+function collapseCard(pid) {
+  const card = qpid(pid);
+  if (card) card.classList.toggle('collapsed');
+}
+
+function setSearch(val) {
+  searchQuery = val.toLowerCase().trim();
+  render();
+}
+
+function updateLastUpdatedText() {
+  const el = document.getElementById('lastUpdated');
+  if (!el) return;
+  const mins = Math.floor((Date.now() - _lastUpdateMs) / 60000);
+  el.textContent = mins < 1 ? 'Just updated' : 'Updated ' + mins + ' min' + (mins > 1 ? 's' : '') + ' ago';
+}
+
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('gm_dark', isDark ? '1' : '0');
+  const btn = document.getElementById('darkModeBtn');
+  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+}
+
 /* ---- SIGN OUT ---- */
 async function doSignOut() {
   try { await fetch('/api/logout', { method: 'POST' }); } catch (_) {}
@@ -2012,10 +2173,19 @@ async function doSignOut() {
   document.getElementById('barDate').textContent =
     DAYS[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear();
 
+  // Dark mode
+  if (localStorage.getItem('gm_dark') === '1') {
+    document.body.classList.add('dark-mode');
+    const btn = document.getElementById('darkModeBtn');
+    if (btn) btn.textContent = '☀️';
+  }
+
   await loadFromServer();
   renderTeamTabs();
   render();
   startAutoRefresh();
+  updateLastUpdatedText();
+  setInterval(updateLastUpdatedText, 30000);
 
   // Fire-and-forget orphan cleanup after initial load
   fetch('/api/cleanup', { method: 'POST' }).catch(() => {});
