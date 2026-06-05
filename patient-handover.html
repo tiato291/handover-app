@@ -315,11 +315,82 @@ textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-heigh
 /* ---- PRINT HEADER (hidden on screen) ---- */
 .print-header { display: none; }
 
+/* ---- CARD HEADER INLINE INPUTS ---- */
+.card-top-left { flex: 1; min-width: 0; }
+
+.pt-hdr-main {
+  display: flex; align-items: baseline; gap: 3px; flex-wrap: wrap; min-width: 0; margin-bottom: 1px;
+}
+.pt-hdr-meta {
+  display: flex; align-items: center; gap: 3px; margin-top: 4px; flex-wrap: wrap; min-width: 0;
+}
+.hdr-meta-lbl {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--muted); flex-shrink: 0; font-family: 'SF Mono','Consolas','Menlo',monospace;
+}
+.hdr-meta-sep { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+.hdr-demog-sep { font-size: 12px; color: var(--border); flex-shrink: 0; margin: 0 2px; font-weight: 300; }
+
+.hdr-inp {
+  background: transparent; border: none; border-bottom: 1.5px solid transparent;
+  outline: none; font-family: inherit; color: var(--text);
+  padding: 2px 3px; cursor: text;
+  transition: border-color 0.15s, background 0.15s;
+  border-radius: 3px 3px 0 0; min-width: 2ch;
+}
+.hdr-inp:hover  { background: rgba(0,0,0,0.04); border-bottom-color: rgba(0,0,0,0.18); }
+.hdr-inp:focus  { background: rgba(42,92,138,0.06); border-bottom-color: var(--pri); }
+.hdr-inp::placeholder { color: #c0c8d4; font-weight: 400; }
+
+.hdr-name-inp { font-size: 15px; font-weight: 700; max-width: 14ch; }
+.hdr-age-inp  { font-size: 12px; font-weight: 600; color: var(--muted); width: 4ch; max-width: 5ch; }
+.hdr-nhi-inp  {
+  font-size: 11px; font-family: 'SF Mono','Consolas','Menlo',monospace;
+  letter-spacing: 0.3px; color: var(--muted); max-width: 9ch; text-transform: uppercase;
+}
+.hdr-bed-inp  {
+  font-size: 11px; font-family: 'SF Mono','Consolas','Menlo',monospace;
+  color: var(--muted); max-width: 5ch;
+}
+
+.hdr-sel {
+  background: transparent; border: none; border-bottom: 1.5px solid transparent;
+  outline: none; font-family: inherit; color: var(--muted);
+  padding: 2px 3px; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  border-radius: 3px 3px 0 0;
+  -webkit-appearance: none; appearance: none;
+}
+.hdr-sel:hover  { background: rgba(0,0,0,0.04); border-bottom-color: rgba(0,0,0,0.18); }
+.hdr-sel:focus  { background: rgba(42,92,138,0.06); border-bottom-color: var(--pri); color: var(--text); }
+.hdr-gender-sel { font-size: 12px; font-weight: 600; }
+.hdr-ward-sel   { font-size: 11px; font-family: 'SF Mono','Consolas','Menlo',monospace; max-width: 9ch; }
+
+/* SGOC badge-select — replaces the read-only s-badge in the header */
+.hdr-sgoc-sel {
+  padding: 4px 9px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.2px;
+  white-space: nowrap; cursor: pointer; font-family: inherit; outline: none;
+  -webkit-appearance: none; appearance: none;
+  border: 1.5px solid; text-align: center;
+  transition: filter 0.12s;
+  print-color-adjust: exact; -webkit-print-color-adjust: exact;
+}
+.hdr-sgoc-sel:hover { filter: brightness(0.94); }
+.hdr-sgoc-sel.sgoc-none { background: #eef0f4; color: var(--muted); border-color: var(--border); }
+.hdr-sgoc-sel.sgoc-a { background: var(--sgoc-a-bg); color: var(--sgoc-a); border-color: var(--sgoc-a-bd); }
+.hdr-sgoc-sel.sgoc-b { background: var(--sgoc-b-bg); color: var(--sgoc-b); border-color: var(--sgoc-b-bd); }
+.hdr-sgoc-sel.sgoc-c { background: var(--sgoc-c-bg); color: var(--sgoc-c); border-color: var(--sgoc-c-bd); }
+.hdr-sgoc-sel.sgoc-d { background: var(--sgoc-d-bg); color: var(--sgoc-d); border-color: var(--sgoc-d-bd); }
+
 /* ---- VIEW MODE ---- */
 body.view-mode .inp,
 body.view-mode .card-sel,
 body.view-mode .ward-sel,
-body.view-mode textarea.job-inp { pointer-events: none; }
+body.view-mode textarea.job-inp,
+body.view-mode .hdr-inp,
+body.view-mode .hdr-sel,
+body.view-mode .hdr-sgoc-sel { pointer-events: none; }
 body.view-mode .no-print,
 body.view-mode .btn-addjob,
 body.view-mode .presets,
@@ -543,6 +614,21 @@ body.view-mode .btn-clear-all { display: none !important; }
 
   .card-top {
     padding: 4pt 8pt !important;
+    print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important;
+  }
+  /* Header inline inputs in print — strip interactivity, show as text */
+  .hdr-inp, .hdr-sel {
+    border-bottom: none !important; background: transparent !important; padding: 0 1pt !important;
+  }
+  .hdr-name-inp { font-size: 9pt !important; font-weight: 700; }
+  .hdr-age-inp, .hdr-gender-sel { font-size: 7.5pt !important; }
+  .hdr-nhi-inp, .hdr-ward-sel, .hdr-bed-inp { font-size: 7pt !important; }
+  .hdr-meta-lbl { font-size: 6pt !important; }
+  .hdr-meta-sep, .hdr-demog-sep { font-size: 7pt !important; }
+  .pt-hdr-main { margin-bottom: 0; }
+  .pt-hdr-meta { margin-top: 1pt; }
+  .hdr-sgoc-sel {
+    padding: 1.5pt 6pt !important; font-size: 7pt !important; border-radius: 10pt !important;
     print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important;
   }
   .pt-name { font-size: 9pt !important; font-weight: 700; white-space: normal !important; }
@@ -1197,10 +1283,13 @@ function setSgocDd(pid, val) {
   savePatient(pid);
   const card = qpid(pid);
   if (!card) return;
-  card.querySelector('.card-top').className = 'card-top' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : '');
-  const badge = card.querySelector('.s-badge');
-  badge.className = 's-badge' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : ' sgoc-none');
-  badge.textContent = p.sgoc ? 'SGOC ' + p.sgoc : 'SGOC';
+  const sfx = p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : '';
+  card.querySelector('.card-top').className = 'card-top' + sfx;
+  const sgocSel = card.querySelector('.hdr-sgoc-sel');
+  if (sgocSel) {
+    sgocSel.className = 'hdr-sgoc-sel' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : ' sgoc-none');
+    sgocSel.value = val;
+  }
 }
 
 function refreshSgocNote(pid) {
@@ -1219,7 +1308,10 @@ function setGenderDd(pid, val) {
   if (!card) return;
   const otherInp = card.querySelector('.gender-other-inp');
   if (otherInp) otherInp.style.display = (val === 'Other') ? 'block' : 'none';
-  refreshTop(pid);
+  // Sync all gender selects in this card (header + body share .sync-gender)
+  card.querySelectorAll('.sync-gender').forEach(sel => {
+    if (sel !== document.activeElement) sel.value = val;
+  });
 }
 
 function setCoverage(pid, val) {
@@ -1550,17 +1642,23 @@ function genderLabel(p) {
   return p.gender === 'Other' ? (p.genderOther || 'Other') : p.gender;
 }
 
-function refreshTop(pid) {
+function refreshHeader(pid) {
   const p = findPatient(pid), card = qpid(pid);
   if (!p || !card) return;
-  const full   = [p.firstName, p.lastName].filter(Boolean).join(' ');
-  const nameEl = card.querySelector('.pt-name');
-  if (full) { nameEl.className = 'pt-name'; nameEl.textContent = full; }
-  else       { nameEl.className = 'pt-name ph'; nameEl.textContent = 'New Patient'; }
-  card.querySelector('.pt-demog').textContent = (p.age || '') + genderLabel(p);
-  card.querySelector('.pt-meta').textContent =
-    'NHI: ' + (p.nhi || '—') + '   •   ' + (p.ward || 'Ward') + '  Bed ' + (p.bed || '—');
+  const nameInps = card.querySelectorAll('.hdr-name-inp');
+  if (nameInps[0] && nameInps[0] !== document.activeElement) nameInps[0].value = p.firstName || '';
+  if (nameInps[1] && nameInps[1] !== document.activeElement) nameInps[1].value = p.lastName  || '';
+  const ageInp = card.querySelector('.hdr-age-inp');
+  if (ageInp && ageInp !== document.activeElement) ageInp.value = p.age || '';
+  const nhiInp = card.querySelector('.hdr-nhi-inp');
+  if (nhiInp && nhiInp !== document.activeElement) nhiInp.value = p.nhi || '';
+  const wardSel = card.querySelector('.hdr-ward-sel');
+  if (wardSel && wardSel !== document.activeElement) wardSel.value = p.ward || 'Medical';
+  const bedInp = card.querySelector('.hdr-bed-inp');
+  if (bedInp && bedInp !== document.activeElement) bedInp.value = p.bed || '';
 }
+// Keep refreshTop as alias for backward compat with any residual callers
+const refreshTop = refreshHeader;
 
 function autoH(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 
@@ -1586,18 +1684,40 @@ function renderJobs(pid) {
 
 function cardHTML(p) {
   const pid     = p.pid;
-  const full    = [p.firstName, p.lastName].filter(Boolean).join(' ');
-  const demog   = (p.age || '') + genderLabel(p);
   const covSlug = p.coverage ? (COV_SLUG[p.coverage] || '') : '';
   return (
     '<div class="card" data-pid="' + pid + '">' +
     '<div class="card-top' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : '') + '">' +
-      '<div style="flex:1;min-width:0">' +
-        '<div class="pt-name-row">' +
-          '<div class="' + (full ? 'pt-name' : 'pt-name ph') + '">' + h(full || 'New Patient') + '</div>' +
-          '<span class="pt-demog">' + h(demog) + '</span>' +
+      '<div class="card-top-left">' +
+        /* ── Row 1: Names + Age + Gender ── */
+        '<div class="pt-hdr-main">' +
+          '<input class="hdr-inp hdr-name-inp" type="text" value="' + h(p.firstName) + '" placeholder="First name"' +
+            ' oninput="setField(\'' + pid + '\',\'firstName\',this.value)">' +
+          '<input class="hdr-inp hdr-name-inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
+            ' oninput="setField(\'' + pid + '\',\'lastName\',this.value)">' +
+          '<span class="hdr-demog-sep">|</span>' +
+          '<input class="hdr-inp hdr-age-inp" type="number" min="0" max="150" value="' + h(p.age) + '" placeholder="Age"' +
+            ' oninput="setField(\'' + pid + '\',\'age\',this.value)">' +
+          '<select class="hdr-sel hdr-gender-sel sync-gender" onchange="setGenderDd(\'' + pid + '\',this.value)">' +
+            '<option value="">—</option>' +
+            '<option value="M"' + (p.gender === 'M' ? ' selected' : '') + '>M</option>' +
+            '<option value="F"' + (p.gender === 'F' ? ' selected' : '') + '>F</option>' +
+            '<option value="Other"' + (p.gender === 'Other' ? ' selected' : '') + '>Other</option>' +
+          '</select>' +
         '</div>' +
-        '<div class="pt-meta">NHI: ' + h(p.nhi || '—') + '   &bull;   ' + h(p.ward || 'Ward') + '  Bed ' + h(p.bed || '—') + '</div>' +
+        /* ── Row 2: NHI + Location ── */
+        '<div class="pt-hdr-meta">' +
+          '<span class="hdr-meta-lbl">NHI</span>' +
+          '<input class="hdr-inp hdr-nhi-inp" type="text" value="' + h(p.nhi) + '" placeholder="—" maxlength="8"' +
+            ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value)">' +
+          '<span class="hdr-meta-sep">&bull;</span>' +
+          '<select class="hdr-sel hdr-ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value)">' +
+            WARDS.map(w => '<option value="' + w + '"' + (p.ward === w ? ' selected' : '') + '>' + w + '</option>').join('') +
+          '</select>' +
+          '<span class="hdr-meta-sep">Bed</span>' +
+          '<input class="hdr-inp hdr-bed-inp" type="text" value="' + h(p.bed) + '" placeholder="—"' +
+            ' oninput="setField(\'' + pid + '\',\'bed\',this.value)">' +
+        '</div>' +
         '<div class="pt-sgoc-note">' + h(p.sgocNote || '') + '</div>' +
         '<div class="cov-hdr no-print">' +
           '<select class="card-sel" onchange="setCoverage(\'' + pid + '\',this.value)">' +
@@ -1607,9 +1727,10 @@ function cardHTML(p) {
         '</div>' +
       '</div>' +
       '<div class="card-badges">' +
-        '<span class="s-badge' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : ' sgoc-none') + '">' +
-          (p.sgoc ? 'SGOC ' + p.sgoc : 'SGOC') +
-        '</span>' +
+        '<select class="hdr-sgoc-sel' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : ' sgoc-none') + '" onchange="setSgocDd(\'' + pid + '\',this.value)">' +
+          '<option value="">SGOC</option>' +
+          ['A','B','C','D'].map(l => '<option value="' + l + '"' + (p.sgoc === l ? ' selected' : '') + '>SGOC ' + l + '</option>').join('') +
+        '</select>' +
         '<span class="cov-badge' + (covSlug ? ' cov-' + covSlug : ' cov-none') + '">' + h(p.coverage || '') + '</span>' +
         '<div class="pt-menu-wrap no-print">' +
           '<button class="btn-pt-menu" onclick="togglePtMenu(event,\'' + pid + '\')" title="Options">&#8942;</button>' +
@@ -1624,20 +1745,20 @@ function cardHTML(p) {
       '<div class="row2 no-print">' +
         '<div class="f"><span class="lbl">First Name</span>' +
           '<input class="inp f-fn" type="text" value="' + h(p.firstName) + '" placeholder="First name"' +
-          ' oninput="setField(\'' + pid + '\',\'firstName\',this.value);refreshTop(\'' + pid + '\')">' +
+          ' oninput="setField(\'' + pid + '\',\'firstName\',this.value);refreshHeader(\'' + pid + '\')">' +
         '</div>' +
         '<div class="f"><span class="lbl">Last Name</span>' +
           '<input class="inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
-          ' oninput="setField(\'' + pid + '\',\'lastName\',this.value);refreshTop(\'' + pid + '\')">' +
+          ' oninput="setField(\'' + pid + '\',\'lastName\',this.value);refreshHeader(\'' + pid + '\')">' +
         '</div>' +
       '</div>' +
       '<div class="row2 no-print">' +
         '<div class="f"><span class="lbl">Age</span>' +
           '<input class="inp" type="number" min="0" max="150" value="' + h(p.age) + '" placeholder="—"' +
-          ' oninput="setField(\'' + pid + '\',\'age\',this.value);refreshTop(\'' + pid + '\')">' +
+          ' oninput="setField(\'' + pid + '\',\'age\',this.value);refreshHeader(\'' + pid + '\')">' +
         '</div>' +
         '<div class="f"><span class="lbl">Gender</span>' +
-          '<select class="card-sel" onchange="setGenderDd(\'' + pid + '\',this.value)">' +
+          '<select class="card-sel sync-gender" onchange="setGenderDd(\'' + pid + '\',this.value)">' +
             '<option value="">—</option>' +
             '<option value="M"' + (p.gender === 'M' ? ' selected' : '') + '>Male</option>' +
             '<option value="F"' + (p.gender === 'F' ? ' selected' : '') + '>Female</option>' +
@@ -1645,36 +1766,28 @@ function cardHTML(p) {
           '</select>' +
           '<input class="inp gender-other-inp" type="text" value="' + h(p.genderOther || '') + '" placeholder="Please specify..."' +
             ' style="display:' + (p.gender === 'Other' ? 'block' : 'none') + ';margin-top:4px"' +
-            ' oninput="setField(\'' + pid + '\',\'genderOther\',this.value);refreshTop(\'' + pid + '\')">' +
+            ' oninput="setField(\'' + pid + '\',\'genderOther\',this.value)">' +
         '</div>' +
       '</div>' +
       '<div class="row2 no-print">' +
         '<div class="f"><span class="lbl">NHI Number</span>' +
           '<input class="inp" type="text" value="' + h(p.nhi) + '" placeholder="ABC1234" maxlength="8" style="text-transform:uppercase"' +
-          ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value);refreshTop(\'' + pid + '\')">' +
+          ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value);refreshHeader(\'' + pid + '\')">' +
         '</div>' +
         '<div class="f"><span class="lbl">Location</span>' +
           '<div class="loc-row">' +
-            '<select class="ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value);refreshTop(\'' + pid + '\')">' +
+            '<select class="ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value);refreshHeader(\'' + pid + '\')">' +
               WARDS.map(w => '<option value="' + w + '"' + (p.ward === w ? ' selected' : '') + '>' + w + '</option>').join('') +
             '</select>' +
             '<span class="loc-sep">Bed</span>' +
             '<input class="inp" type="text" value="' + h(p.bed) + '" placeholder="00" style="flex:0.8"' +
-            ' oninput="setField(\'' + pid + '\',\'bed\',this.value);refreshTop(\'' + pid + '\')">' +
+            ' oninput="setField(\'' + pid + '\',\'bed\',this.value);refreshHeader(\'' + pid + '\')">' +
           '</div>' +
         '</div>' +
       '</div>' +
       '<div class="f"><span class="lbl">Diagnosis</span>' +
         '<input class="inp" type="text" value="' + h(p.diagnosis) + '" placeholder="Current working diagnosis"' +
         ' oninput="setField(\'' + pid + '\',\'diagnosis\',this.value)">' +
-      '</div>' +
-      '<div class="f no-print"><span class="lbl">Shared Goals of Care (SGOC)</span>' +
-        '<select class="card-sel" onchange="setSgocDd(\'' + pid + '\',this.value)">' +
-          '<option value="">—</option>' +
-          ['A','B','C','D'].map(l =>
-            '<option value="' + l + '"' + (p.sgoc === l ? ' selected' : '') + '>SGOC ' + l + '</option>'
-          ).join('') +
-        '</select>' +
       '</div>' +
       '<div class="f no-print"><span class="lbl">SGOC Comment</span>' +
         '<input class="inp" type="text" value="' + h(p.sgocNote || '') + '" placeholder="Additional comment..."' +
