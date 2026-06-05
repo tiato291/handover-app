@@ -1110,6 +1110,7 @@ function newPid() {
 }
 
 function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+function trunc(s, n) { n = n || 28; s = (s || '').trim(); return s.length > n ? s.slice(0, n) + '…' : s; }
 
 function findPatient(pid) {
   for (const tp of Object.values(allPatients)) {
@@ -1467,7 +1468,7 @@ function addPatient() {
     diagnosis:'', sgoc:'', sgocNote:'', assessment:'', background:'', coverage:'No Jobs', jobs:[]
   };
   patients.push(p);
-  pushUndo({ type: 'add', pid: p.pid, teamId: currentTeam });
+  pushUndo({ type: 'add', pid: p.pid, teamId: currentTeam, desc: 'added patient' });
   savePatient(p.pid);
   render();
   setTimeout(() => {
@@ -1579,6 +1580,7 @@ function addJob(pid, text) {
   if (!p) return;
   const job = { id: newJid(), text: text || '', done: false };
   p.jobs.push(job);
+  pushUndo({ type: 'add_job', pid, teamId: p.teamId, jid: job.id, desc: 'added ' + trunc(text || 'job') });
   savePatient(pid);
   renderJobs(pid);
   if (!text) {
@@ -1596,7 +1598,7 @@ function toggleJob(pid, jid) {
   if (!p) return;
   const j = p.jobs.find(x => x.id === jid);
   if (!j) return;
-  pushUndo({ type: 'toggle_job', pid, teamId: p.teamId, jid, prevDone: j.done, prevCompletedAt: j.completedAt });
+  pushUndo({ type: 'toggle_job', pid, teamId: p.teamId, jid, prevDone: j.done, prevCompletedAt: j.completedAt, desc: (j.done ? 'unticked' : 'ticked') + ' ' + trunc(j.text || 'job') });
   j.done = !j.done;
   if (j.done) { j.completedAt = Date.now(); } else { delete j.completedAt; }
   savePatient(pid);
@@ -1623,7 +1625,7 @@ function deleteJob(pid, jid) {
   if (!p) return;
   const idx = p.jobs.findIndex(j => j.id === jid);
   if (idx === -1) return;
-  pushUndo({ type: 'delete_job', pid, teamId: p.teamId, job: deepClone(p.jobs[idx]), index: idx });
+  pushUndo({ type: 'delete_job', pid, teamId: p.teamId, job: deepClone(p.jobs[idx]), index: idx, desc: 'deleted ' + trunc(p.jobs[idx].text || 'job') });
   p.jobs.splice(idx, 1);
   savePatient(pid);
   renderJobs(pid);
@@ -1775,7 +1777,9 @@ function confirmMovePatient() {
   const p = findPatient(pid);
   if (!p) return;
   const fromTeam = p.teamId || currentTeam;
-  pushUndo({ type: 'move', patient: deepClone(p), fromTeam, toTeam });
+  const _mvToName = (teams.find(t => t.id === toTeam) || {}).name || toTeam;
+  const _mvPtName = [p.firstName, p.lastName].filter(Boolean).join(' ') || 'patient';
+  pushUndo({ type: 'move', patient: deepClone(p), fromTeam, toTeam, desc: 'moved ' + _mvPtName + ' to ' + _mvToName });
   allPatients[fromTeam] = (allPatients[fromTeam] || []).filter(x => x.pid !== pid);
   if (fromTeam === currentTeam) patients = allPatients[currentTeam];
   deletePatientFromServer(pid, fromTeam);
@@ -1814,7 +1818,8 @@ function confirmDeletePatient() {
   const p = findPatient(pid);
   if (!p) return;
   const teamId = p.teamId || currentTeam;
-  pushUndo({ type: 'delete', patient: deepClone(p), teamId });
+  const _delPtName = [p.firstName, p.lastName].filter(Boolean).join(' ') || 'patient';
+  pushUndo({ type: 'delete', patient: deepClone(p), teamId, desc: 'deleted ' + _delPtName });
   allPatients[teamId] = (allPatients[teamId] || []).filter(x => x.pid !== pid);
   if (teamId === currentTeam) patients = allPatients[currentTeam];
   deletePatientFromServer(pid, teamId);
@@ -1837,7 +1842,7 @@ async function performUndo() {
     case 'add': {
       const p = findPatient(action.pid);
       if (p) {
-        redoStack.push({ type: 'redo_add', patient: deepClone(p), teamId: action.teamId });
+        redoStack.push({ type: 'redo_add', patient: deepClone(p), teamId: action.teamId, desc: action.desc });
         allPatients[action.teamId] = (allPatients[action.teamId] || []).filter(x => x.pid !== action.pid);
         if (action.teamId === currentTeam) patients = allPatients[currentTeam];
         await deletePatientFromServer(action.pid, action.teamId);
@@ -1847,7 +1852,7 @@ async function performUndo() {
     }
     case 'delete': {
       const teamId = action.teamId;
-      redoStack.push({ type: 'redo_delete', pid: action.patient.pid, teamId, patient: deepClone(action.patient) });
+      redoStack.push({ type: 'redo_delete', pid: action.patient.pid, teamId, patient: deepClone(action.patient), desc: action.desc });
       if (!allPatients[teamId]) allPatients[teamId] = [];
       allPatients[teamId].push(action.patient);
       if (teamId === currentTeam) patients = allPatients[currentTeam];
@@ -1857,7 +1862,7 @@ async function performUndo() {
     }
     case 'move': {
       const { patient, fromTeam, toTeam } = action;
-      redoStack.push({ type: 'redo_move', patient: deepClone(patient), fromTeam, toTeam });
+      redoStack.push({ type: 'redo_move', patient: deepClone(patient), fromTeam, toTeam, desc: action.desc });
       allPatients[toTeam] = (allPatients[toTeam] || []).filter(x => x.pid !== patient.pid);
       if (!allPatients[fromTeam]) allPatients[fromTeam] = [];
       const restored = { ...patient, teamId: fromTeam };
@@ -1876,7 +1881,7 @@ async function performUndo() {
       if (p) {
         const j = p.jobs.find(x => x.id === action.jid);
         if (j) {
-          redoStack.push({ type: 'redo_toggle', pid: action.pid, teamId: action.teamId, jid: action.jid, targetDone: j.done });
+          redoStack.push({ type: 'redo_toggle', pid: action.pid, teamId: action.teamId, jid: action.jid, targetDone: j.done, desc: action.desc });
           j.done = action.prevDone;
           if (action.prevDone && action.prevCompletedAt) { j.completedAt = action.prevCompletedAt; }
           else { delete j.completedAt; }
@@ -1896,7 +1901,7 @@ async function performUndo() {
     }
     case 'clear_all': {
       const { patients: saved, teamId } = action;
-      redoStack.push({ type: 'redo_clear', teamId });
+      redoStack.push({ type: 'redo_clear', teamId, desc: action.desc });
       if (!allPatients[teamId]) allPatients[teamId] = [];
       for (const p of saved) { allPatients[teamId].push(p); savePatient(p.pid); }
       if (teamId === currentTeam) patients = allPatients[currentTeam];
@@ -1907,10 +1912,23 @@ async function performUndo() {
       const { pid, job, index } = action;
       const p = findPatient(pid);
       if (p) {
-        redoStack.push({ type: 'redo_delete_job', pid, teamId: action.teamId, job: deepClone(job) });
+        redoStack.push({ type: 'redo_delete_job', pid, teamId: action.teamId, job: deepClone(job), desc: action.desc });
         p.jobs.splice(index, 0, job);
         savePatient(pid);
         renderJobs(pid);
+      }
+      break;
+    }
+    case 'add_job': {
+      const p = findPatient(action.pid);
+      if (p) {
+        const idx = p.jobs.findIndex(j => j.id === action.jid);
+        if (idx !== -1) {
+          redoStack.push({ type: 'redo_add_job', pid: action.pid, teamId: action.teamId, job: deepClone(p.jobs[idx]), index: idx, desc: action.desc });
+          p.jobs.splice(idx, 1);
+          savePatient(action.pid);
+          renderJobs(action.pid);
+        }
       }
       break;
     }
@@ -1918,7 +1936,7 @@ async function performUndo() {
 
   if (redoStack.length > 10) redoStack.shift();
   updateUndoRedoBtns();
-  showToast('Undone');
+  showToast('Undone' + (action.desc ? ': ' + action.desc : ''));
 }
 
 function updateUndoRedoBtns() {
@@ -1935,7 +1953,7 @@ async function performRedo() {
   switch (action.type) {
     case 'redo_add': {
       const { patient, teamId } = action;
-      undoStack.push({ type: 'add', pid: patient.pid, teamId });
+      undoStack.push({ type: 'add', pid: patient.pid, teamId, desc: action.desc });
       if (!allPatients[teamId]) allPatients[teamId] = [];
       allPatients[teamId].push(patient);
       if (teamId === currentTeam) patients = allPatients[currentTeam];
@@ -1945,7 +1963,7 @@ async function performRedo() {
     }
     case 'redo_delete': {
       const { pid, teamId, patient } = action;
-      undoStack.push({ type: 'delete', patient: deepClone(patient), teamId });
+      undoStack.push({ type: 'delete', patient: deepClone(patient), teamId, desc: action.desc });
       allPatients[teamId] = (allPatients[teamId] || []).filter(x => x.pid !== pid);
       if (teamId === currentTeam) patients = allPatients[currentTeam];
       await deletePatientFromServer(pid, teamId);
@@ -1954,7 +1972,7 @@ async function performRedo() {
     }
     case 'redo_move': {
       const { patient, fromTeam, toTeam } = action;
-      undoStack.push({ type: 'move', patient: deepClone(patient), fromTeam, toTeam });
+      undoStack.push({ type: 'move', patient: deepClone(patient), fromTeam, toTeam, desc: action.desc });
       allPatients[fromTeam] = (allPatients[fromTeam] || []).filter(x => x.pid !== patient.pid);
       if (!allPatients[toTeam]) allPatients[toTeam] = [];
       const moved = { ...patient, teamId: toTeam };
@@ -1973,7 +1991,7 @@ async function performRedo() {
       if (p) {
         const j = p.jobs.find(x => x.id === action.jid);
         if (j) {
-          undoStack.push({ type: 'toggle_job', pid: action.pid, teamId: action.teamId, jid: action.jid, prevDone: j.done, prevCompletedAt: j.completedAt });
+          undoStack.push({ type: 'toggle_job', pid: action.pid, teamId: action.teamId, jid: action.jid, prevDone: j.done, prevCompletedAt: j.completedAt, desc: action.desc });
           j.done = action.targetDone;
           if (j.done) { j.completedAt = Date.now(); } else { delete j.completedAt; }
           savePatient(action.pid);
@@ -1993,7 +2011,7 @@ async function performRedo() {
     case 'redo_clear': {
       const { teamId } = action;
       const saved = deepClone(allPatients[teamId] || []);
-      undoStack.push({ type: 'clear_all', patients: saved, teamId });
+      undoStack.push({ type: 'clear_all', patients: saved, teamId, desc: action.desc });
       (allPatients[teamId] || []).forEach(p => deletePatientFromServer(p.pid, teamId));
       allPatients[teamId] = [];
       if (teamId === currentTeam) patients = allPatients[currentTeam];
@@ -2005,8 +2023,19 @@ async function performRedo() {
       const p = findPatient(pid);
       if (p) {
         const idx = p.jobs.findIndex(j => j.id === job.id);
-        undoStack.push({ type: 'delete_job', pid, teamId, job: deepClone(job), index: idx !== -1 ? idx : p.jobs.length });
+        undoStack.push({ type: 'delete_job', pid, teamId, job: deepClone(job), index: idx !== -1 ? idx : p.jobs.length, desc: action.desc });
         if (idx !== -1) p.jobs.splice(idx, 1);
+        savePatient(pid);
+        renderJobs(pid);
+      }
+      break;
+    }
+    case 'redo_add_job': {
+      const { pid, job, index, teamId } = action;
+      const p = findPatient(pid);
+      if (p) {
+        undoStack.push({ type: 'add_job', pid, teamId, jid: job.id, desc: action.desc });
+        p.jobs.splice(index, 0, job);
         savePatient(pid);
         renderJobs(pid);
       }
@@ -2016,7 +2045,7 @@ async function performRedo() {
 
   if (undoStack.length > 10) undoStack.shift();
   updateUndoRedoBtns();
-  showToast('Redone');
+  showToast('Redone' + (action.desc ? ': ' + action.desc : ''));
 }
 
 /* ---- TOAST ---- */
@@ -2340,7 +2369,7 @@ function handleImportOverlayClick(e) {
 function doImport(replace) {
   if (replace) {
     const saved = deepClone(patients);
-    pushUndo({ type: 'clear_all', patients: saved, teamId: currentTeam });
+    pushUndo({ type: 'clear_all', patients: saved, teamId: currentTeam, desc: 'replaced all patients' });
     (allPatients[currentTeam] || []).forEach(p => deletePatientFromServer(p.pid, currentTeam));
     allPatients[currentTeam] = [];
     patients = allPatients[currentTeam];
@@ -2393,7 +2422,7 @@ function onClearInputChange(inp) {
 
 function confirmClearAll() {
   const saved = deepClone(patients);
-  pushUndo({ type: 'clear_all', patients: saved, teamId: currentTeam });
+  pushUndo({ type: 'clear_all', patients: saved, teamId: currentTeam, desc: 'cleared all patients' });
   (allPatients[currentTeam] || []).forEach(p => deletePatientFromServer(p.pid, currentTeam));
   allPatients[currentTeam] = [];
   patients = allPatients[currentTeam];
@@ -2483,12 +2512,16 @@ async function doSignOut() {
   });
 
   window.addEventListener('keydown', e => {
+    const ae = document.activeElement;
+    const inText = ae && (ae.tagName === 'TEXTAREA' || (ae.tagName === 'INPUT' && ae.type !== 'checkbox'));
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
+      if (inText) return;
       e.preventDefault();
       performRedo();
       return;
     }
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
+      if (inText) return;
       e.preventDefault();
       performUndo();
       return;
