@@ -1,7 +1,10 @@
 'use strict';
 const supabase          = require('../lib/supabase');
 const { verifySession } = require('../lib/auth');
-const KEY = 'handover-v1';
+
+const TEAMS_KEY  = 'handover-teams-v1';
+const LEGACY_KEY = 'handover-v1';
+const PT_PREFIX  = 'pt:';
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -16,54 +19,68 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    const { data, error } = await supabase
+    const { data: teamsRow, error: teamsErr } = await supabase
       .from('store')
       .select('value')
-      .eq('key', KEY)
+      .eq('key', TEAMS_KEY)
       .maybeSingle();
 
-    if (error) {
-      console.error('[data] GET error:', error.code, error.message, error.details);
-      return res.status(503).json({ error: 'Storage unavailable.', detail: error.message });
+    if (teamsErr) {
+      console.error('[data] GET teams error:', teamsErr.message);
+      return res.status(503).json({ error: 'Storage unavailable.', detail: teamsErr.message });
     }
 
-    console.log('[data] GET ok — row found:', !!data);
-    return res.status(200).json(data?.value ?? { teams: [], teamData: {} });
+    const { data: patientRows, error: ptsErr } = await supabase
+      .from('store')
+      .select('key, value')
+      .like('key', PT_PREFIX + '%');
+
+    if (ptsErr) {
+      console.error('[data] GET patients error:', ptsErr.message);
+      return res.status(503).json({ error: 'Storage unavailable.', detail: ptsErr.message });
+    }
+
+    const teams    = teamsRow?.value?.teams ?? [];
+    const patients = (patientRows || []).map(r => r.value).filter(Boolean);
+
+    // Only check for legacy data when there is nothing in the new format yet
+    let legacy = null;
+    if (patients.length === 0 && teams.length === 0) {
+      const { data: legacyRow } = await supabase
+        .from('store')
+        .select('value')
+        .eq('key', LEGACY_KEY)
+        .maybeSingle();
+      legacy = legacyRow?.value ?? null;
+    }
+
+    console.log(`[data] GET ok — ${patients.length} patients, ${teams.length} teams, legacy:${!!legacy}`);
+    return res.status(200).json({ teams, patients, _legacy: legacy });
   }
 
   if (req.method === 'POST') {
-    // Vercel may deliver body as a pre-parsed object or as a raw string depending
-    // on runtime version — handle both.
     let body = req.body;
     if (typeof body === 'string') {
-      try {
-        body = JSON.parse(body);
-      } catch (e) {
-        console.error('[data] POST body parse failed:', e.message);
-        return res.status(400).json({ error: 'Invalid JSON body' });
-      }
+      try { body = JSON.parse(body); }
+      catch (e) { return res.status(400).json({ error: 'Invalid JSON body' }); }
     }
-
     if (!body || typeof body !== 'object') {
-      console.error('[data] POST body is empty or wrong type:', typeof body);
       return res.status(400).json({ error: 'Missing body' });
     }
-
-    console.log('[data] POST — upserting, top-level keys:', Object.keys(body).join(', '));
 
     const { error } = await supabase
       .from('store')
       .upsert(
-        { key: KEY, value: body, updated_at: new Date().toISOString() },
+        { key: TEAMS_KEY, value: { teams: body.teams || [] }, updated_at: new Date().toISOString() },
         { onConflict: 'key' }
       );
 
     if (error) {
-      console.error('[data] POST upsert error:', error.code, error.message, error.details, error.hint);
+      console.error('[data] POST teams error:', error.message);
       return res.status(503).json({ error: 'Storage write failed.', detail: error.message });
     }
 
-    console.log('[data] POST ok');
+    console.log('[data] POST teams ok');
     return res.status(200).json({ ok: true });
   }
 

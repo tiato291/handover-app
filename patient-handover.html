@@ -42,7 +42,6 @@ body {
 .bar-sub   { font-size: 11px; opacity: 0.68; }
 .bar-right { display: flex; align-items: center; gap: 8px; flex: none; }
 
-/* Team tabs — scrollable strip */
 .team-tabs {
   display: flex; align-items: center; gap: 4px;
   flex: 1 1 0; overflow-x: auto; min-width: 0;
@@ -62,7 +61,6 @@ body {
 .team-tab:hover { background: rgba(255,255,255,0.2); color: #fff; }
 .team-tab.active { background: #fff; color: var(--pri); font-weight: 700; border-color: #fff; }
 
-/* Delete × on custom teams */
 .tdel {
   display: none; font-size: 14px; line-height: 1;
   color: rgba(255,255,255,0.45); cursor: pointer;
@@ -74,7 +72,6 @@ body {
 .team-tab.active .tdel { color: rgba(42,92,138,0.4); }
 .team-tab.active .tdel:hover { color: #c0392b !important; }
 
-/* Inline rename input */
 .tname-inp {
   background: transparent; border: none;
   border-bottom: 1.5px solid rgba(255,255,255,0.6);
@@ -87,7 +84,6 @@ body {
   border-bottom-color: rgba(255,255,255,0.5);
 }
 
-/* New Team button */
 .btn-newteam {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 5px 10px; border-radius: 6px;
@@ -99,7 +95,6 @@ body {
 }
 .btn-newteam:hover { border-color: rgba(255,255,255,0.65); color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.1); }
 
-/* Print + Add buttons */
 .btn-print {
   display: flex; align-items: center; gap: 5px;
   background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.82);
@@ -197,7 +192,6 @@ body {
 }
 .card:hover { box-shadow: 0 5px 14px rgba(0,0,0,0.1); }
 
-
 .card-top {
   padding: 12px 16px; display: flex; align-items: flex-start;
   justify-content: space-between; gap: 12px; border-bottom: 1px solid;
@@ -229,10 +223,8 @@ body {
 .sgoc-c { background: var(--sgoc-c-bg); color: var(--sgoc-c); border: 1.5px solid var(--sgoc-c-bd); }
 .sgoc-d { background: var(--sgoc-d-bg); color: var(--sgoc-d); border: 1.5px solid var(--sgoc-d-bd); }
 
-/* Right-side badge column */
 .card-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
 
-/* Coverage badge in header */
 .cov-badge {
   display: inline-flex; align-items: center; padding: 4px 10px;
   border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap;
@@ -245,14 +237,11 @@ body {
 .cov-badge.cov-results { background: var(--cov-results-bg); color: var(--cov-results); border: 1.5px solid var(--cov-results-bd); }
 .cov-badge.cov-nojobs  { background: var(--cov-nojobs-bg);  color: var(--cov-nojobs);  border: 1.5px solid var(--cov-nojobs-bd); }
 
-/* Coverage selector — now lives in card header */
 .cov-hdr { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 
 .card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 11px; flex: 1; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .f { display: flex; flex-direction: column; gap: 3px; }
-
-/* Assessment + Background wrapper — 2-col in print */
 .print-row2 { display: flex; flex-direction: column; gap: 11px; }
 
 .lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.9px; color: var(--muted); }
@@ -273,7 +262,6 @@ textarea.inp { resize: none; overflow: hidden; min-height: 34px; line-height: 1.
 }
 .ward-sel:focus { border-bottom-color: var(--pri); }
 
-/* Shared dropdown style — coverage, SGOC, gender selects */
 .card-sel {
   font-family: inherit; font-size: 13px; color: var(--text);
   background: transparent; border: none; border-bottom: 1.5px solid transparent;
@@ -307,7 +295,6 @@ textarea.inp { resize: none; overflow: hidden; min-height: 34px; line-height: 1.
 .job-inp::placeholder { color: #c0c8d4; }
 textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-height: 1.5; }
 .job.done .job-inp { text-decoration: line-through; color: var(--muted); opacity: 0.5; }
-/* Print proxy — hidden on screen, shown instead of textarea when printing */
 .job-inp.job-pxy { display: none; }
 .job { align-items: flex-start; }
 .job-del {
@@ -325,22 +312,10 @@ textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-heigh
 }
 .pre-btn:hover { background: var(--pri-lite); color: var(--pri); border-color: #b8d0e8; }
 
-.card-foot {
-  padding: 10px 16px; border-top: 1px solid var(--border);
-  display: flex; justify-content: flex-end; background: #fafbfc;
-}
-.btn-remove {
-  display: flex; align-items: center; gap: 5px;
-  background: none; color: #b04450; border: 1px solid #e8b0b8;
-  border-radius: 5px; padding: 4px 10px; font-size: 11px; font-weight: 500;
-  cursor: pointer; font-family: inherit; transition: all 0.12s;
-}
-.btn-remove:hover { background: var(--unst-bg); border-color: #f0a0a8; }
-
 /* ---- PRINT HEADER (hidden on screen) ---- */
 .print-header { display: none; }
 
-/* ---- VIEW MODE — lock all editable fields except job checkboxes ---- */
+/* ---- VIEW MODE ---- */
 body.view-mode .inp,
 body.view-mode .card-sel,
 body.view-mode .ward-sel,
@@ -349,7 +324,6 @@ body.view-mode .no-print,
 body.view-mode .btn-addjob,
 body.view-mode .presets,
 body.view-mode .job-del,
-body.view-mode .card-foot,
 body.view-mode .btn-add-pt,
 body.view-mode .btn-clear-all { display: none !important; }
 
@@ -364,7 +338,7 @@ body.view-mode .btn-clear-all { display: none !important; }
 }
 .btn-clear-all:hover { background: rgba(200,40,40,0.32); color: #ffd0d0; border-color: rgba(255,120,120,0.6); }
 
-/* ---- CLEAR ALL MODAL ---- */
+/* ---- MODALS ---- */
 .modal-overlay {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,0.52); z-index: 200;
@@ -404,6 +378,13 @@ body.view-mode .btn-clear-all { display: none !important; }
 }
 .modal-inp:focus { border-color: #c0392b; }
 .modal-inp.valid { border-color: #c0392b; background: #fff5f5; }
+.modal-sel {
+  width: 100%; font-family: inherit; font-size: 14px;
+  padding: 9px 12px; border: 1.5px solid #d1d8e0;
+  border-radius: 7px; outline: none; color: #1e2d3d;
+  background: #fff; cursor: pointer; transition: border-color 0.15s;
+}
+.modal-sel:focus { border-color: var(--pri); }
 .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
 .modal-btn-cancel {
   flex: 1; padding: 9px; border-radius: 7px;
@@ -418,10 +399,8 @@ body.view-mode .btn-clear-all { display: none !important; }
   color: #fff; font-size: 13px; font-weight: 700;
   cursor: pointer; font-family: inherit; transition: all 0.13s;
 }
-.modal-btn-confirm:disabled {
-  background: #e8b0b8; cursor: not-allowed; opacity: 0.7;
-}
-.modal-btn-confirm:not(:disabled):hover { background: #a93226; }
+.modal-btn-confirm:disabled { background: #c8c8d0; cursor: not-allowed; opacity: 0.65; }
+.modal-btn-confirm:not(:disabled):hover { filter: brightness(0.9); }
 
 /* ---- IMPORT BUTTON ---- */
 .btn-import {
@@ -446,9 +425,7 @@ body.view-mode .btn-clear-all { display: none !important; }
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 14px;
 }
-.import-stats {
-  font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 4px;
-}
+.import-stats { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 4px; }
 .import-stats strong { color: var(--text); }
 .import-preview-list {
   max-height: 210px; overflow-y: auto;
@@ -484,19 +461,56 @@ body.view-mode .btn-clear-all { display: none !important; }
 }
 .import-btn-replace:hover { background: #c8821c; color: #fff; }
 
-/* Replace confirmation modal — team name chip */
 .replace-team-name {
-  display: inline-block;
-  font-weight: 700; color: var(--pri);
+  display: inline-block; font-weight: 700; color: var(--pri);
   background: var(--pri-lite); border: 1.5px solid #bdd0e6;
   padding: 1px 9px; border-radius: 5px; white-space: nowrap;
 }
+
+/* ---- THREE-DOT MENU ---- */
+.pt-menu-wrap { position: relative; margin-top: 2px; }
+.btn-pt-menu {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 20px; line-height: 1;
+  padding: 0 5px 2px; border-radius: 5px; font-weight: 700;
+  transition: background 0.12s, color 0.12s; flex-shrink: 0;
+  letter-spacing: 0;
+}
+.btn-pt-menu:hover { background: rgba(0,0,0,0.08); color: var(--text); }
+.pt-dropdown {
+  position: absolute; right: 0; top: calc(100% + 4px);
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.06);
+  min-width: 165px; z-index: 100; overflow: hidden;
+}
+.pt-dropdown button {
+  display: block; width: 100%; text-align: left;
+  padding: 10px 16px; background: none; border: none;
+  font-size: 13px; font-family: inherit; color: var(--text);
+  cursor: pointer; transition: background 0.1s;
+}
+.pt-dropdown button:hover { background: var(--pri-lite); color: var(--pri); }
+.pt-dropdown button.danger { color: #b04450; }
+.pt-dropdown button.danger:hover { background: var(--unst-bg); color: #c0392b; }
+
+/* ---- TOAST ---- */
+#toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: rgba(20,30,50,0.88); color: #fff;
+  padding: 8px 22px; border-radius: 20px;
+  font-size: 13px; font-weight: 500;
+  opacity: 0; transition: opacity 0.18s, transform 0.18s;
+  pointer-events: none; z-index: 400; white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* Fields already shown in card header — hidden when printing */
 @media print { .no-print { display: none !important; } }
 
 /* ================================================================
-   PRINT STYLES — compact, 4-5 patients per A4 page
+   PRINT STYLES
    ================================================================ */
 @media print {
   @page { size: A4; margin: 10mm 10mm; }
@@ -545,7 +559,6 @@ body.view-mode .btn-clear-all { display: none !important; }
   .card-body { padding: 4pt 8pt !important; gap: 2.5pt !important; }
   .row2 { gap: 5pt !important; }
 
-  /* Assessment + Background side-by-side */
   .print-row2 { display: grid !important; grid-template-columns: 1fr 1fr; gap: 5pt !important; }
 
   .lbl { font-size: 6pt !important; letter-spacing: 0.4px !important; }
@@ -570,7 +583,6 @@ body.view-mode .btn-clear-all { display: none !important; }
   }
   .job { padding: 0.5pt 2pt !important; align-items: flex-start !important; }
   .job-cb { width: 8pt !important; height: 8pt !important; flex-shrink: 0; margin-top: 1pt; }
-  /* Hide original textarea; proxy <div class="job-inp job-pxy"> shows full text */
   textarea.job-inp { display: none !important; }
   .job-inp.job-pxy {
     display: block !important;
@@ -580,11 +592,9 @@ body.view-mode .btn-clear-all { display: none !important; }
   }
   .job.done .job-inp { text-decoration: line-through; color: #888; opacity: 1; }
 
-  /* Hide all interactive/edit UI */
   .btn-addjob  { display: none !important; }
   .presets     { display: none !important; }
   .job-del     { display: none !important; }
-  .card-foot   { display: none !important; }
 
   .loc-sep { font-size: 7pt !important; padding-bottom: 1pt; }
 }
@@ -597,7 +607,6 @@ body.view-mode .btn-clear-all { display: none !important; }
     <div class="bar-title">General Medicine &mdash; Patient Handover</div>
     <div class="bar-sub" id="barDate"></div>
   </div>
-  <!-- Team tabs rendered by JS -->
   <div id="teamTabs" class="team-tabs"></div>
   <div class="bar-right">
     <button class="btn-clear-all" onclick="openClearModal()">
@@ -667,8 +676,8 @@ body.view-mode .btn-clear-all { display: none !important; }
     </div>
     <div class="modal-title" id="clearModalTitle">Clear All Patients</div>
     <div class="modal-warn">
-      This will <strong>permanently delete all patients</strong> on this team list.<br>
-      This cannot be undone.
+      This will <strong>remove all patients</strong> on this team list.<br>
+      Press Ctrl+Z after closing to undo.
     </div>
     <label class="modal-inp-lbl" for="clearConfirmInp">Type DELETE to confirm</label>
     <input class="modal-inp" id="clearConfirmInp" type="text" autocomplete="off"
@@ -719,8 +728,7 @@ body.view-mode .btn-clear-all { display: none !important; }
     <div class="modal-warn" style="margin-bottom:0">
       This will replace all patients in
       <span id="replaceConfirmTeamName" class="replace-team-name"></span>.<br><br>
-      Other teams will not be affected.<br>
-      <strong>This cannot be undone.</strong>
+      Other teams will not be affected.
     </div>
     <div class="modal-btns">
       <button class="modal-btn-cancel" onclick="closeReplaceConfirmModal()">Cancel</button>
@@ -729,9 +737,62 @@ body.view-mode .btn-clear-all { display: none !important; }
   </div>
 </div>
 
+<!-- Move Patient Modal -->
+<div class="modal-overlay" id="moveModal" onclick="handleMoveOverlayClick(event)">
+  <div class="modal-box" role="dialog" aria-modal="true">
+    <div class="modal-icon" style="background:var(--pri-lite);border-color:#bdd0e6">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--pri)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+      </svg>
+    </div>
+    <div class="modal-title" id="movePtTitle">Move Patient</div>
+    <div id="moveStep1">
+      <label class="modal-inp-lbl" for="moveTeamSel">Select destination team</label>
+      <select class="modal-sel" id="moveTeamSel" onchange="onMoveTeamSelect(this.value)">
+        <option value="">— Select team —</option>
+      </select>
+      <div class="modal-btns">
+        <button class="modal-btn-cancel" onclick="closeMoveModal()">Cancel</button>
+        <button class="modal-btn-confirm" id="moveNextBtn" disabled onclick="showMoveConfirm()" style="background:var(--pri)">Next &rarr;</button>
+      </div>
+    </div>
+    <div id="moveStep2" style="display:none">
+      <div class="modal-warn" id="moveConfirmMsg" style="margin-bottom:20px"></div>
+      <div class="modal-btns">
+        <button class="modal-btn-cancel" onclick="backMoveStep()">&larr; Back</button>
+        <button class="modal-btn-confirm" onclick="confirmMovePatient()" style="background:var(--pri)">Confirm Move</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Patient Confirmation Modal -->
+<div class="modal-overlay" id="deletePatientModal" onclick="handleDeletePatientOverlay(event)">
+  <div class="modal-box" role="dialog" aria-modal="true">
+    <div class="modal-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14H6L5,6"/>
+        <path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4h6v2"/>
+      </svg>
+    </div>
+    <div class="modal-title">Delete Patient</div>
+    <div class="modal-warn">
+      Remove <strong id="deletePatientName"></strong> from the handover list?<br>
+      <span style="font-size:12px;color:var(--muted)">Press Ctrl+Z to undo after deleting.</span>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="modal-btn-confirm" onclick="confirmDeletePatient()">Delete</button>
+    </div>
+  </div>
+</div>
+
 <main class="main">
   <div class="grid" id="grid"></div>
 </main>
+
+<!-- Undo toast -->
+<div id="toast"></div>
 
 <script>
 const PRESETS = [
@@ -748,13 +809,45 @@ const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Sat
 const MONTHS = ['January','February','March','April','May','June',
                 'July','August','September','October','November','December'];
 
-let patients      = [];
-let nextPid       = 1;
+/* ---- STATE ---- */
+let allPatients   = {};   // { teamId: [patient, ...] }
+let patients      = [];   // reference to allPatients[currentTeam]
 let teams         = [];
 let currentTeam   = localStorage.getItem('gm_cur_team') || 'team1';
 let currentFilter = 'All';
 let currentSort   = 'default';
 let editMode      = true;
+
+let undoStack        = [];    // max 10 steps
+let _openMenuPid     = null;  // currently open three-dot menu pid
+let _movePid         = null;
+let _moveToTeam      = null;
+let _deleteTargetPid = null;
+
+let _lastSaveMs        = 0;
+const _saveTimers      = {};
+let _autoRefreshTimer  = null;
+
+/* ---- HELPERS ---- */
+function newPid() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return 'pid_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+}
+
+function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+function findPatient(pid) {
+  for (const tp of Object.values(allPatients)) {
+    const p = tp.find(x => x.pid === pid);
+    if (p) return p;
+  }
+  return null;
+}
+
+function getTeamPatients(teamId) {
+  if (!allPatients[teamId]) allPatients[teamId] = [];
+  return allPatients[teamId];
+}
 
 /* ---- TEAM DEFAULTS ---- */
 function defaultTeams() {
@@ -766,20 +859,53 @@ function defaultTeams() {
   ];
 }
 
-/* ---- SERVER DATA LAYER ---- */
-let serverData  = { teams: [], teamData: {} };
-let _saveTimer  = null;
-let _lastSaveMs = 0;
-
-/* Load current team's patients out of the in-memory serverData cache */
-function applyTeamData() {
-  const td = (serverData.teamData || {})[currentTeam] || { patients: [], nextPid: 1 };
-  patients = td.patients || [];
-  /* Derive nextPid from highest existing id so concurrent clients don't collide */
-  nextPid = patients.length ? Math.max(...patients.map(p => Number(p.id) || 0)) + 1 : 1;
-  normalizePatients();
+/* ---- SAVE FUNCTIONS ---- */
+function savePatient(pid) {
+  clearTimeout(_saveTimers[pid]);
+  updateCount();
+  _saveTimers[pid] = setTimeout(() => _doSavePatient(pid), 300);
 }
 
+async function _doSavePatient(pid) {
+  _lastSaveMs = Date.now();
+  const p = findPatient(pid);
+  if (!p) return;
+  try {
+    const res = await fetch('/api/patient', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(p)
+    });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (!res.ok) console.error('[patient] Save failed:', res.status);
+  } catch(e) { console.error('[patient] Save failed:', e); }
+}
+
+async function deletePatientFromServer(pid, teamId) {
+  _lastSaveMs = Date.now();
+  try {
+    const res = await fetch('/api/patient', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pid, teamId })
+    });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    if (!res.ok) console.error('[patient] Delete failed:', res.status);
+  } catch(e) { console.error('[patient] Delete failed:', e); }
+}
+
+async function saveTeams() {
+  try {
+    const res = await fetch('/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ teams })
+    });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+  } catch(e) { console.error('[teams] Save failed:', e); }
+}
+
+/* ---- NORMALIZATION ---- */
 function normalizePatients() {
   patients.forEach(p => {
     if (Array.isArray(p.coverage)) p.coverage = p.coverage[0] || '';
@@ -790,125 +916,128 @@ function normalizePatients() {
     if (p.gender      === undefined) p.gender      = '';
     if (p.genderOther === undefined) p.genderOther = '';
     if (!p.ward) p.ward = 'Medical';
+    if (!p.jobs) p.jobs = [];
   });
 }
 
+/* ---- LOAD FROM SERVER ---- */
 async function loadFromServer() {
   try {
     const res = await fetch('/api/data');
     if (res.status === 401) { window.location.href = '/login'; return; }
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    serverData = await res.json();
-    /* Show Sign Out button when auth is active (server returned real data, not dev bypass) */
+    const data = await res.json();
+
     const signOutBtn = document.getElementById('signOutBtn');
     if (signOutBtn) signOutBtn.style.display = '';
-  } catch (e) {
-    console.warn('Could not load from server, starting empty:', e);
-    serverData = { teams: [], teamData: {} };
+
+    let loadedTeams = data.teams || [];
+    if (!loadedTeams.length) loadedTeams = defaultTeams();
+    defaultTeams().forEach((def, i) => {
+      if (!loadedTeams.find(t => t.id === def.id)) loadedTeams.splice(i, 0, def);
+    });
+    teams = loadedTeams;
+
+    allPatients = {};
+    for (const p of (data.patients || [])) {
+      if (!p.teamId) continue;
+      if (!allPatients[p.teamId]) allPatients[p.teamId] = [];
+      allPatients[p.teamId].push(p);
+    }
+
+    if (data._legacy && (data.patients || []).length === 0) {
+      await migrateLegacyData(data._legacy);
+      return;
+    }
+
+    if (!teams.find(t => t.id === currentTeam)) {
+      currentTeam = 'team1';
+      localStorage.setItem('gm_cur_team', 'team1');
+    }
+    patients = getTeamPatients(currentTeam);
+    normalizePatients();
+  } catch(e) {
+    console.warn('Could not load from server:', e);
+    teams = defaultTeams();
+    allPatients = {};
+    patients = getTeamPatients(currentTeam);
   }
+}
 
-  if (!serverData.teams || !serverData.teams.length) serverData.teams = defaultTeams();
-  teams = serverData.teams;
-
-  /* Guarantee all four fixed teams are always present */
-  defaultTeams().forEach((def, i) => {
-    if (!teams.find(t => t.id === def.id)) teams.splice(i, 0, def);
-  });
-
+async function migrateLegacyData(legacy) {
+  if (!legacy) return;
+  if (legacy.teams && legacy.teams.length) {
+    teams = legacy.teams;
+    defaultTeams().forEach((def, i) => {
+      if (!teams.find(t => t.id === def.id)) teams.splice(i, 0, def);
+    });
+    await saveTeams();
+  }
+  const saves = [];
+  for (const [teamId, teamData] of Object.entries(legacy.teamData || {})) {
+    for (const p of (teamData.patients || [])) {
+      const pid = newPid();
+      const patient = {
+        pid, teamId,
+        firstName: p.firstName || '', lastName: p.lastName || '',
+        age: p.age || '', gender: p.gender || '', genderOther: p.genderOther || '',
+        nhi: p.nhi || '', ward: p.ward || 'Medical', bed: p.bed || '',
+        diagnosis: p.diagnosis || '', sgoc: p.sgoc || '', sgocNote: p.sgocNote || '',
+        assessment: p.assessment || '', background: p.background || '',
+        coverage: Array.isArray(p.coverage) ? (p.coverage[0] || '') : (p.coverage || ''),
+        jobs: (p.jobs || []).map(j => ({ id: j.id || Date.now(), text: j.text || '', done: !!j.done }))
+      };
+      if (!allPatients[teamId]) allPatients[teamId] = [];
+      allPatients[teamId].push(patient);
+      saves.push(_doSavePatient(pid));
+    }
+  }
+  await Promise.all(saves);
   if (!teams.find(t => t.id === currentTeam)) {
     currentTeam = 'team1';
     localStorage.setItem('gm_cur_team', 'team1');
   }
-
-  applyTeamData();
+  patients = getTeamPatients(currentTeam);
+  normalizePatients();
 }
 
-/* Debounced save — batches rapid keystrokes into a single request */
-function save() {
-  clearTimeout(_saveTimer);
-  updateCount();
-  _saveTimer = setTimeout(_doSave, 300);
+/* ---- AUTO-REFRESH (30 seconds) ---- */
+function startAutoRefresh() {
+  if (_autoRefreshTimer) return;
+  _autoRefreshTimer = setInterval(doAutoRefresh, 30000);
 }
 
-function saveTeams() { save(); }
-
-async function _doSave() {
-  _lastSaveMs = Date.now();
-  if (!serverData.teamData) serverData.teamData = {};
-  serverData.teams = teams;
-  serverData.teamData[currentTeam] = { patients, nextPid };
+async function doAutoRefresh() {
+  if (Date.now() - _lastSaveMs < 5000) return;
+  const active = document.activeElement;
+  const grid   = document.getElementById('grid');
+  if (active && grid && grid.contains(active)) return;
   try {
-    const res = await fetch('/api/data', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(serverData)
-    });
+    const res = await fetch('/api/data');
     if (res.status === 401) { window.location.href = '/login'; return; }
-    if (!res.ok) console.error('Save failed: HTTP', res.status);
-  } catch (e) {
-    console.error('Save failed:', e);
-  }
-}
-
-async function doSignOut() {
-  try { await fetch('/api/logout', { method: 'POST' }); } catch (_) {}
-  window.location.href = '/login';
-}
-
-/* Sync — SSE when available (local server), polling fallback (Vercel serverless) */
-function initSync() {
-  const es = new EventSource('/api/events');
-  let opened = false;
-
-  es.addEventListener('open', () => { opened = true; });
-
-  es.onmessage = e => {
+    if (!res.ok) return;
     if (Date.now() - _lastSaveMs < 2000) return;
-    try {
-      const incoming = JSON.parse(e.data);
-      serverData = incoming;
-      teams = incoming.teams || defaultTeams();
-      defaultTeams().forEach((def, i) => {
-        if (!teams.find(t => t.id === def.id)) teams.splice(i, 0, def);
-      });
-      applyTeamData(); renderTeamTabs(); render();
-    } catch (err) { console.error('Sync error:', err); }
-  };
-
-  es.onerror = () => {
-    es.close();
-    if (!opened) {
-      /* /api/events doesn't exist (Vercel) — switch to polling */
-      startPolling();
-    } else {
-      /* SSE dropped — reconnect */
-      setTimeout(initSync, 3000);
+    const data = await res.json();
+    let newTeams = data.teams || [];
+    if (!newTeams.length) newTeams = defaultTeams();
+    defaultTeams().forEach((def, i) => {
+      if (!newTeams.find(t => t.id === def.id)) newTeams.splice(i, 0, def);
+    });
+    teams = newTeams;
+    allPatients = {};
+    for (const p of (data.patients || [])) {
+      if (!p.teamId) continue;
+      if (!allPatients[p.teamId]) allPatients[p.teamId] = [];
+      allPatients[p.teamId].push(p);
     }
-  };
+    patients = getTeamPatients(currentTeam);
+    normalizePatients();
+    renderTeamTabs();
+    render();
+  } catch(e) { /* network blip */ }
 }
 
-let _pollTimer = null;
-function startPolling() {
-  if (_pollTimer) return;
-  _pollTimer = setInterval(async () => {
-    if (Date.now() - _lastSaveMs < 5000) return;
-    try {
-      const res = await fetch('/api/data');
-      if (res.status === 401) { window.location.href = '/login'; return; }
-      if (!res.ok) return;
-      if (Date.now() - _lastSaveMs < 2000) return;
-      const incoming = await res.json();
-      serverData = incoming;
-      teams = incoming.teams || defaultTeams();
-      defaultTeams().forEach((def, i) => {
-        if (!teams.find(t => t.id === def.id)) teams.splice(i, 0, def);
-      });
-      applyTeamData(); renderTeamTabs(); render();
-    } catch (_) { /* network blip, retry next tick */ }
-  }, 10000);
-}
-
-/* ---- TEAM TABS RENDERING ---- */
+/* ---- TEAM TABS ---- */
 function renderTeamTabs() {
   const container = document.getElementById('teamTabs');
   let html = teams.map(t => {
@@ -918,43 +1047,35 @@ function renderTeamTabs() {
       ' onclick="handleTabClick(event,\'' + t.id + '\')">' +
       '<span class="tname">' + h(t.name) + '</span>' +
       (isDynamic
-        ? '<span class="tdel" onclick="event.stopPropagation();deleteTeam(\'' + t.id + '\')" title="Remove team">×</span>'
+        ? '<span class="tdel" onclick="event.stopPropagation();deleteTeam(\'' + t.id + '\')" title="Remove team">&times;</span>'
         : '') +
     '</button>';
   }).join('');
   html += '<button class="btn-newteam" onclick="createTeam()">' +
     '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
-    ' New Team' +
-  '</button>';
+    ' New Team</button>';
   container.innerHTML = html;
 }
 
-/* Click on a team tab: if active → rename, else → switch */
 function handleTabClick(e, tid) {
   if (currentTeam === tid) startRename(e.currentTarget, tid);
   else switchTeam(tid);
 }
 
-/* Inline rename: replaces the name span with an input */
 function startRename(btn, tid) {
   const nameSpan = btn.querySelector('.tname');
   if (!nameSpan) return;
   const team = teams.find(x => x.id === tid);
   if (!team) return;
   const orig = team.name;
-
   const inp = document.createElement('input');
-  inp.type = 'text';
-  inp.value = orig;
-  inp.className = 'tname-inp';
+  inp.type = 'text'; inp.value = orig; inp.className = 'tname-inp';
   inp.style.width = Math.max(orig.length + 2, 6) + 'ch';
   nameSpan.replaceWith(inp);
-
   function commit() {
     const v = inp.value.trim();
     if (v) team.name = v;
-    saveTeams();
-    renderTeamTabs();
+    saveTeams(); renderTeamTabs();
   }
   inp.addEventListener('blur', commit);
   inp.addEventListener('keydown', ev => {
@@ -962,9 +1083,7 @@ function startRename(btn, tid) {
     if (ev.key === 'Escape') { team.name = orig; inp.blur(); }
     inp.style.width = Math.max(inp.value.length + 2, 6) + 'ch';
   });
-  inp.addEventListener('input', () => {
-    inp.style.width = Math.max(inp.value.length + 2, 6) + 'ch';
-  });
+  inp.addEventListener('input', () => { inp.style.width = Math.max(inp.value.length + 2, 6) + 'ch'; });
   requestAnimationFrame(() => { inp.focus(); inp.select(); });
 }
 
@@ -981,25 +1100,25 @@ function deleteTeam(tid) {
   const team = teams.find(t => t.id === tid);
   if (!team || team.fixed) return;
   if (!confirm('Delete "' + team.name + '"?\nAll patients in this team will be permanently removed.')) return;
-  delete serverData.teamData[tid];
+  (allPatients[tid] || []).forEach(p => deletePatientFromServer(p.pid, tid));
+  delete allPatients[tid];
   teams = teams.filter(t => t.id !== tid);
-  save();
+  saveTeams();
   if (currentTeam === tid) {
     currentTeam = 'team1';
     localStorage.setItem('gm_cur_team', 'team1');
-    applyTeamData();
+    patients = getTeamPatients('team1');
   }
-  renderTeamTabs();
-  render();
+  renderTeamTabs(); render();
 }
 
-/* ---- TEAMS ---- */
 function switchTeam(tid) {
   if (!teams.find(t => t.id === tid)) return;
   currentTeam   = tid;
   currentFilter = 'All';
   localStorage.setItem('gm_cur_team', tid);
-  applyTeamData();
+  patients = getTeamPatients(currentTeam);
+  normalizePatients();
   renderTeamTabs();
   document.querySelectorAll('.filter-btn').forEach(b => {
     b.className = 'filter-btn' + (b.dataset.filter === 'All' ? ' active' : '');
@@ -1007,7 +1126,7 @@ function switchTeam(tid) {
   render();
 }
 
-/* ---- FILTER ---- */
+/* ---- FILTER / SORT ---- */
 function setFilter(f) {
   currentFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b => {
@@ -1017,8 +1136,7 @@ function setFilter(f) {
 }
 
 function getFiltered() {
-  if (currentFilter === 'All') return patients;
-  return patients.filter(p => p.coverage === currentFilter);
+  return currentFilter === 'All' ? patients : patients.filter(p => p.coverage === currentFilter);
 }
 
 function updateCount() {
@@ -1037,60 +1155,47 @@ function updateCount() {
 function doPrint() {
   const team    = teams.find(t => t.id === currentTeam) || { name: 'Unknown Team' };
   const now     = new Date();
-  const dateStr = DAYS[now.getDay()] + ', ' + now.getDate() + ' ' +
-                  MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+  const dateStr = DAYS[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear();
   const shown   = getFiltered().length;
   const total   = patients.length;
   const scope   = currentFilter === 'All'
     ? total + ' patient' + (total !== 1 ? 's' : '')
     : h(currentFilter) + ' only — ' + shown + ' of ' + total + ' patients';
-
   document.getElementById('printHeader').innerHTML =
-    '<div class="ph-top">' +
-      '<span class="ph-title">General Medicine — Patient Handover</span>' +
-      '<span class="ph-team">' + h(team.name) + '</span>' +
-    '</div>' +
+    '<div class="ph-top"><span class="ph-title">General Medicine — Patient Handover</span><span class="ph-team">' + h(team.name) + '</span></div>' +
     '<div class="ph-meta"><span>' + dateStr + '</span><span>' + scope + '</span></div>' +
     '<hr class="ph-rule">';
-
   window.print();
 }
 
 /* ---- PATIENTS ---- */
 function addPatient() {
   const p = {
-    id: nextPid++,
+    pid: newPid(), teamId: currentTeam,
     firstName:'', lastName:'', age:'', gender:'', genderOther:'', nhi:'', ward:'Medical', bed:'',
-    diagnosis:'', sgoc:'', sgocNote:'', assessment:'', background:'',
-    coverage:'', jobs:[]
+    diagnosis:'', sgoc:'', sgocNote:'', assessment:'', background:'', coverage:'', jobs:[]
   };
   patients.push(p);
-  save();
+  pushUndo({ type: 'add', pid: p.pid, teamId: currentTeam });
+  savePatient(p.pid);
   render();
   setTimeout(() => {
-    const card = qpid(p.id);
+    const card = qpid(p.pid);
     if (card) { const f = card.querySelector('.f-fn'); if (f) f.focus(); }
   }, 40);
 }
 
-function removePatient(id) {
-  if (!confirm('Remove this patient from the handover list?')) return;
-  patients = patients.filter(p => p.id !== id);
-  save();
-  render();
+function setField(pid, key, val) {
+  const p = findPatient(pid);
+  if (p) { p[key] = val; savePatient(pid); }
 }
 
-function setField(id, key, val) {
-  const p = patients.find(x => x.id === id);
-  if (p) { p[key] = val; save(); }
-}
-
-function setSgocDd(id, val) {
-  const p = patients.find(x => x.id === id);
+function setSgocDd(pid, val) {
+  const p = findPatient(pid);
   if (!p) return;
   p.sgoc = val;
-  save();
-  const card = qpid(id);
+  savePatient(pid);
+  const card = qpid(pid);
   if (!card) return;
   card.querySelector('.card-top').className = 'card-top' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : '');
   const badge = card.querySelector('.s-badge');
@@ -1098,34 +1203,33 @@ function setSgocDd(id, val) {
   badge.textContent = p.sgoc ? 'SGOC ' + p.sgoc : 'SGOC';
 }
 
-function refreshSgocNote(id) {
-  const p = patients.find(x => x.id === id), card = qpid(id);
+function refreshSgocNote(pid) {
+  const p = findPatient(pid), card = qpid(pid);
   if (!p || !card) return;
-  const noteEl = card.querySelector('.pt-sgoc-note');
-  if (noteEl) noteEl.textContent = p.sgocNote || '';
+  const el = card.querySelector('.pt-sgoc-note');
+  if (el) el.textContent = p.sgocNote || '';
 }
 
-function setGenderDd(id, val) {
-  const p = patients.find(x => x.id === id);
+function setGenderDd(pid, val) {
+  const p = findPatient(pid);
   if (!p) return;
   p.gender = val;
-  save();
-  const card = qpid(id);
+  savePatient(pid);
+  const card = qpid(pid);
   if (!card) return;
   const otherInp = card.querySelector('.gender-other-inp');
   if (otherInp) otherInp.style.display = (val === 'Other') ? 'block' : 'none';
-  refreshTop(id);
+  refreshTop(pid);
 }
 
-function setCoverage(id, val) {
-  const p = patients.find(x => x.id === id);
+function setCoverage(pid, val) {
+  const p = findPatient(pid);
   if (!p) return;
   p.coverage = val;
-  save();
-  const card = qpid(id);
+  savePatient(pid);
+  const card = qpid(pid);
   if (!card) return;
   const slug = val ? (COV_SLUG[val] || '') : '';
-  card.className = 'card';
   const covBadge = card.querySelector('.cov-badge');
   if (covBadge) {
     covBadge.className = 'cov-badge' + (slug ? ' cov-' + slug : ' cov-none');
@@ -1134,10 +1238,7 @@ function setCoverage(id, val) {
   updateCount();
 }
 
-function setSort(s) {
-  currentSort = s;
-  render();
-}
+function setSort(s) { currentSort = s; render(); }
 
 function toggleMode() {
   editMode = !editMode;
@@ -1156,8 +1257,7 @@ function getSorted(list) {
   const copy = list.slice();
   if (currentSort === 'lastName') {
     copy.sort((a, b) =>
-      (a.lastName || '').localeCompare(b.lastName || '') ||
-      (a.firstName || '').localeCompare(b.firstName || '')
+      (a.lastName || '').localeCompare(b.lastName || '') || (a.firstName || '').localeCompare(b.firstName || '')
     );
   } else if (currentSort === 'nhi') {
     copy.sort((a, b) => (a.nhi || '').localeCompare(b.nhi || ''));
@@ -1165,15 +1265,11 @@ function getSorted(list) {
     copy.sort((a, b) => {
       const wa = WARD_ORDER[a.ward] ?? 99, wb = WARD_ORDER[b.ward] ?? 99;
       if (wa !== wb) return wa - wb;
-      const ba = parseInt(a.bed, 10), bb = parseInt(b.bed, 10);
-      const na = isNaN(ba) ? Infinity : ba, nb = isNaN(bb) ? Infinity : bb;
-      return na - nb;
+      const na = parseInt(a.bed, 10), nb = parseInt(b.bed, 10);
+      return (isNaN(na) ? Infinity : na) - (isNaN(nb) ? Infinity : nb);
     });
   } else if (currentSort === 'coverage') {
-    copy.sort((a, b) => {
-      const ca = COV_ORDER[a.coverage] ?? 99, cb = COV_ORDER[b.coverage] ?? 99;
-      return ca - cb;
-    });
+    copy.sort((a, b) => ((COV_ORDER[a.coverage] ?? 99) - (COV_ORDER[b.coverage] ?? 99)));
   }
   return copy;
 }
@@ -1183,11 +1279,11 @@ let _jid = Date.now();
 function newJid() { return ++_jid; }
 
 function addJob(pid, text) {
-  const p = patients.find(x => x.id === pid);
+  const p = findPatient(pid);
   if (!p) return;
   const job = { id: newJid(), text: text || '', done: false };
   p.jobs.push(job);
-  save();
+  savePatient(pid);
   renderJobs(pid);
   if (!text) {
     setTimeout(() => {
@@ -1200,38 +1296,253 @@ function addJob(pid, text) {
 }
 
 function toggleJob(pid, jid) {
-  const p = patients.find(x => x.id === pid);
+  const p = findPatient(pid);
   if (!p) return;
   const j = p.jobs.find(x => x.id === jid);
   if (!j) return;
+  pushUndo({ type: 'toggle_job', pid, teamId: p.teamId, jid, prevDone: j.done });
   j.done = !j.done;
-  save();
+  savePatient(pid);
   const el = document.querySelector('[data-jid="' + jid + '"]');
-  if (el) el.classList.toggle('done', j.done);
+  if (el) {
+    el.classList.toggle('done', j.done);
+    const cb = el.querySelector('.job-cb');
+    if (cb) cb.checked = j.done;
+  }
 }
 
 function updateJobText(pid, jid, text) {
-  const p = patients.find(x => x.id === pid);
+  const p = findPatient(pid);
   if (!p) return;
   const j = p.jobs.find(x => x.id === jid);
-  if (j) { j.text = text; save(); }
+  if (j) { j.text = text; savePatient(pid); }
 }
 
 function deleteJob(pid, jid) {
-  const p = patients.find(x => x.id === pid);
+  const p = findPatient(pid);
   if (!p) return;
   p.jobs = p.jobs.filter(j => j.id !== jid);
-  save();
+  savePatient(pid);
   renderJobs(pid);
 }
 
-/* ---- HELPERS ---- */
+/* ---- THREE-DOT MENU ---- */
+function togglePtMenu(event, pid) {
+  event.stopPropagation();
+  const menu = document.getElementById('pt-menu-' + pid);
+  if (!menu) return;
+  if (_openMenuPid && _openMenuPid !== pid) {
+    const prev = document.getElementById('pt-menu-' + _openMenuPid);
+    if (prev) prev.style.display = 'none';
+  }
+  const isOpen = menu.style.display !== 'none';
+  menu.style.display = isOpen ? 'none' : 'block';
+  _openMenuPid = isOpen ? null : pid;
+}
+
+function closePtMenu() {
+  if (_openMenuPid) {
+    const menu = document.getElementById('pt-menu-' + _openMenuPid);
+    if (menu) menu.style.display = 'none';
+    _openMenuPid = null;
+  }
+}
+
+/* ---- MOVE PATIENT ---- */
+function openMoveModal(pid) {
+  _movePid = pid; _moveToTeam = null;
+  closePtMenu();
+  const p = findPatient(pid);
+  const name = p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || 'Patient' : 'Patient';
+  document.getElementById('movePtTitle').textContent = 'Move ' + name;
+  const sel = document.getElementById('moveTeamSel');
+  sel.innerHTML = '<option value="">— Select team —</option>' +
+    teams.filter(t => t.id !== currentTeam)
+      .map(t => '<option value="' + h(t.id) + '">' + h(t.name) + '</option>').join('');
+  document.getElementById('moveStep1').style.display = '';
+  document.getElementById('moveStep2').style.display = 'none';
+  document.getElementById('moveNextBtn').disabled = true;
+  document.getElementById('moveModal').classList.add('open');
+}
+
+function closeMoveModal() {
+  document.getElementById('moveModal').classList.remove('open');
+  _movePid = null; _moveToTeam = null;
+}
+
+function handleMoveOverlayClick(e) {
+  if (e.target === document.getElementById('moveModal')) closeMoveModal();
+}
+
+function onMoveTeamSelect(val) {
+  _moveToTeam = val;
+  document.getElementById('moveNextBtn').disabled = !val;
+}
+
+function showMoveConfirm() {
+  if (!_moveToTeam) return;
+  const p = findPatient(_movePid);
+  const name = p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || 'this patient' : 'this patient';
+  const fromTeam = teams.find(t => t.id === currentTeam);
+  const toTeam   = teams.find(t => t.id === _moveToTeam);
+  document.getElementById('moveConfirmMsg').innerHTML =
+    'Move <strong>' + h(name) + '</strong> from <strong>' + h(fromTeam?.name || currentTeam) +
+    '</strong> to <strong>' + h(toTeam?.name || _moveToTeam) + '</strong>?';
+  document.getElementById('moveStep1').style.display = 'none';
+  document.getElementById('moveStep2').style.display = '';
+}
+
+function backMoveStep() {
+  document.getElementById('moveStep1').style.display = '';
+  document.getElementById('moveStep2').style.display = 'none';
+}
+
+function confirmMovePatient() {
+  const pid = _movePid, toTeam = _moveToTeam;
+  if (!pid || !toTeam) return;
+  const p = findPatient(pid);
+  if (!p) return;
+  const fromTeam = p.teamId || currentTeam;
+  pushUndo({ type: 'move', patient: deepClone(p), fromTeam, toTeam });
+  allPatients[fromTeam] = (allPatients[fromTeam] || []).filter(x => x.pid !== pid);
+  if (fromTeam === currentTeam) patients = allPatients[currentTeam];
+  deletePatientFromServer(pid, fromTeam);
+  const moved = { ...p, teamId: toTeam };
+  if (!allPatients[toTeam]) allPatients[toTeam] = [];
+  allPatients[toTeam].push(moved);
+  _lastSaveMs = Date.now();
+  fetch('/api/patient', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(moved)
+  }).catch(e => console.error('[patient] Move save failed:', e));
+  render(); closeMoveModal();
+}
+
+/* ---- DELETE PATIENT MODAL ---- */
+function openDeleteModal(pid) {
+  _deleteTargetPid = pid;
+  closePtMenu();
+  const p = findPatient(pid);
+  const name = p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || 'this patient' : 'this patient';
+  document.getElementById('deletePatientName').textContent = name;
+  document.getElementById('deletePatientModal').classList.add('open');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deletePatientModal').classList.remove('open');
+  _deleteTargetPid = null;
+}
+
+function handleDeletePatientOverlay(e) {
+  if (e.target === document.getElementById('deletePatientModal')) closeDeleteModal();
+}
+
+function confirmDeletePatient() {
+  const pid = _deleteTargetPid;
+  if (!pid) return;
+  const p = findPatient(pid);
+  if (!p) return;
+  const teamId = p.teamId || currentTeam;
+  pushUndo({ type: 'delete', patient: deepClone(p), teamId });
+  allPatients[teamId] = (allPatients[teamId] || []).filter(x => x.pid !== pid);
+  if (teamId === currentTeam) patients = allPatients[currentTeam];
+  deletePatientFromServer(pid, teamId);
+  render(); closeDeleteModal();
+}
+
+/* ---- UNDO ---- */
+function pushUndo(action) {
+  undoStack.push(action);
+  if (undoStack.length > 10) undoStack.shift();
+}
+
+async function performUndo() {
+  const action = undoStack.pop();
+  if (!action) return;
+
+  switch (action.type) {
+    case 'add': {
+      const p = findPatient(action.pid);
+      if (p) {
+        allPatients[action.teamId] = (allPatients[action.teamId] || []).filter(x => x.pid !== action.pid);
+        if (action.teamId === currentTeam) patients = allPatients[currentTeam];
+        await deletePatientFromServer(action.pid, action.teamId);
+        render();
+      }
+      break;
+    }
+    case 'delete': {
+      const teamId = action.teamId;
+      if (!allPatients[teamId]) allPatients[teamId] = [];
+      allPatients[teamId].push(action.patient);
+      if (teamId === currentTeam) patients = allPatients[currentTeam];
+      savePatient(action.patient.pid);
+      render();
+      break;
+    }
+    case 'move': {
+      const { patient, fromTeam, toTeam } = action;
+      allPatients[toTeam] = (allPatients[toTeam] || []).filter(x => x.pid !== patient.pid);
+      if (!allPatients[fromTeam]) allPatients[fromTeam] = [];
+      const restored = { ...patient, teamId: fromTeam };
+      allPatients[fromTeam].push(restored);
+      if (fromTeam === currentTeam || toTeam === currentTeam) patients = allPatients[currentTeam];
+      await deletePatientFromServer(patient.pid, toTeam);
+      _lastSaveMs = Date.now();
+      fetch('/api/patient', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(restored)
+      }).catch(e => console.error('[undo move]', e));
+      render();
+      break;
+    }
+    case 'toggle_job': {
+      const p = findPatient(action.pid);
+      if (p) {
+        const j = p.jobs.find(x => x.id === action.jid);
+        if (j) {
+          j.done = action.prevDone;
+          savePatient(action.pid);
+          const el = document.querySelector('[data-jid="' + action.jid + '"]');
+          if (el) {
+            el.classList.toggle('done', j.done);
+            const cb = el.querySelector('.job-cb');
+            if (cb) cb.checked = j.done;
+          }
+        }
+      }
+      break;
+    }
+    case 'clear_all': {
+      const { patients: saved, teamId } = action;
+      if (!allPatients[teamId]) allPatients[teamId] = [];
+      for (const p of saved) {
+        allPatients[teamId].push(p);
+        savePatient(p.pid);
+      }
+      if (teamId === currentTeam) patients = allPatients[currentTeam];
+      render();
+      break;
+    }
+  }
+
+  showToast('Undone');
+}
+
+/* ---- TOAST ---- */
+let _toastTimer = null;
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+/* ---- DOM HELPERS ---- */
 function qpid(pid) { return document.querySelector('[data-pid="' + pid + '"]'); }
 
 function h(s) {
   return String(s || '')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function genderLabel(p) {
@@ -1240,7 +1551,7 @@ function genderLabel(p) {
 }
 
 function refreshTop(pid) {
-  const p = patients.find(x => x.id === pid), card = qpid(pid);
+  const p = findPatient(pid), card = qpid(pid);
   if (!p || !card) return;
   const full   = [p.firstName, p.lastName].filter(Boolean).join(' ');
   const nameEl = card.querySelector('.pt-name');
@@ -1257,38 +1568,39 @@ function autoH(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight
 function jobHTML(pid, j) {
   return '<div class="job' + (j.done ? ' done' : '') + '" data-jid="' + j.id + '">' +
     '<input type="checkbox" class="job-cb"' + (j.done ? ' checked' : '') +
-      ' onchange="toggleJob(' + pid + ',' + j.id + ')">' +
+      ' onchange="toggleJob(\'' + pid + '\',' + j.id + ')">' +
     '<textarea class="job-inp" rows="1" placeholder="Enter task..."' +
-      ' oninput="updateJobText(' + pid + ',' + j.id + ',this.value);autoH(this)"' +
+      ' oninput="updateJobText(\'' + pid + '\',' + j.id + ',this.value);autoH(this)"' +
       ' onfocus="autoH(this)">' + h(j.text) + '</textarea>' +
-    '<button class="job-del" onclick="deleteJob(' + pid + ',' + j.id + ')" title="Remove">×</button>' +
+    '<button class="job-del" onclick="deleteJob(\'' + pid + '\',' + j.id + ')" title="Remove">&times;</button>' +
   '</div>';
 }
 
 function renderJobs(pid) {
   const card = qpid(pid);
   if (!card) return;
-  const p = patients.find(x => x.id === pid);
+  const p = findPatient(pid);
   if (!p) return;
   card.querySelector('.jobs-list').innerHTML = p.jobs.map(j => jobHTML(pid, j)).join('');
 }
 
 function cardHTML(p) {
-  const full  = [p.firstName, p.lastName].filter(Boolean).join(' ');
-  const demog = (p.age || '') + genderLabel(p);
+  const pid     = p.pid;
+  const full    = [p.firstName, p.lastName].filter(Boolean).join(' ');
+  const demog   = (p.age || '') + genderLabel(p);
   const covSlug = p.coverage ? (COV_SLUG[p.coverage] || '') : '';
   return (
-    '<div class="card" data-pid="' + p.id + '">' +
+    '<div class="card" data-pid="' + pid + '">' +
     '<div class="card-top' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : '') + '">' +
       '<div style="flex:1;min-width:0">' +
         '<div class="pt-name-row">' +
           '<div class="' + (full ? 'pt-name' : 'pt-name ph') + '">' + h(full || 'New Patient') + '</div>' +
           '<span class="pt-demog">' + h(demog) + '</span>' +
         '</div>' +
-        '<div class="pt-meta">NHI: ' + h(p.nhi || '—') + '   •   ' + h(p.ward || 'Ward') + '  Bed ' + h(p.bed || '—') + '</div>' +
+        '<div class="pt-meta">NHI: ' + h(p.nhi || '—') + '   &bull;   ' + h(p.ward || 'Ward') + '  Bed ' + h(p.bed || '—') + '</div>' +
         '<div class="pt-sgoc-note">' + h(p.sgocNote || '') + '</div>' +
         '<div class="cov-hdr no-print">' +
-          '<select class="card-sel" onchange="setCoverage(' + p.id + ',this.value)">' +
+          '<select class="card-sel" onchange="setCoverage(\'' + pid + '\',this.value)">' +
             '<option value="">— Weekend Coverage —</option>' +
             COV.map(o => '<option value="' + h(o) + '"' + (p.coverage === o ? ' selected' : '') + '>' + h(o) + '</option>').join('') +
           '</select>' +
@@ -1298,29 +1610,34 @@ function cardHTML(p) {
         '<span class="s-badge' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : ' sgoc-none') + '">' +
           (p.sgoc ? 'SGOC ' + p.sgoc : 'SGOC') +
         '</span>' +
-        '<span class="cov-badge' + (covSlug ? ' cov-' + covSlug : ' cov-none') + '">' +
-          h(p.coverage || '') +
-        '</span>' +
+        '<span class="cov-badge' + (covSlug ? ' cov-' + covSlug : ' cov-none') + '">' + h(p.coverage || '') + '</span>' +
+        '<div class="pt-menu-wrap no-print">' +
+          '<button class="btn-pt-menu" onclick="togglePtMenu(event,\'' + pid + '\')" title="Options">&#8942;</button>' +
+          '<div class="pt-dropdown" id="pt-menu-' + pid + '" style="display:none">' +
+            '<button onclick="openMoveModal(\'' + pid + '\')">Move Patient</button>' +
+            '<button class="danger" onclick="openDeleteModal(\'' + pid + '\')">Delete Patient</button>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
     '</div>' +
     '<div class="card-body">' +
       '<div class="row2 no-print">' +
         '<div class="f"><span class="lbl">First Name</span>' +
           '<input class="inp f-fn" type="text" value="' + h(p.firstName) + '" placeholder="First name"' +
-          ' oninput="setField(' + p.id + ',\'firstName\',this.value);refreshTop(' + p.id + ')">' +
+          ' oninput="setField(\'' + pid + '\',\'firstName\',this.value);refreshTop(\'' + pid + '\')">' +
         '</div>' +
         '<div class="f"><span class="lbl">Last Name</span>' +
           '<input class="inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
-          ' oninput="setField(' + p.id + ',\'lastName\',this.value);refreshTop(' + p.id + ')">' +
+          ' oninput="setField(\'' + pid + '\',\'lastName\',this.value);refreshTop(\'' + pid + '\')">' +
         '</div>' +
       '</div>' +
       '<div class="row2 no-print">' +
         '<div class="f"><span class="lbl">Age</span>' +
           '<input class="inp" type="number" min="0" max="150" value="' + h(p.age) + '" placeholder="—"' +
-          ' oninput="setField(' + p.id + ',\'age\',this.value);refreshTop(' + p.id + ')">' +
+          ' oninput="setField(\'' + pid + '\',\'age\',this.value);refreshTop(\'' + pid + '\')">' +
         '</div>' +
         '<div class="f"><span class="lbl">Gender</span>' +
-          '<select class="card-sel" onchange="setGenderDd(' + p.id + ',this.value)">' +
+          '<select class="card-sel" onchange="setGenderDd(\'' + pid + '\',this.value)">' +
             '<option value="">—</option>' +
             '<option value="M"' + (p.gender === 'M' ? ' selected' : '') + '>Male</option>' +
             '<option value="F"' + (p.gender === 'F' ? ' selected' : '') + '>Female</option>' +
@@ -1328,31 +1645,31 @@ function cardHTML(p) {
           '</select>' +
           '<input class="inp gender-other-inp" type="text" value="' + h(p.genderOther || '') + '" placeholder="Please specify..."' +
             ' style="display:' + (p.gender === 'Other' ? 'block' : 'none') + ';margin-top:4px"' +
-            ' oninput="setField(' + p.id + ',\'genderOther\',this.value);refreshTop(' + p.id + ')">' +
+            ' oninput="setField(\'' + pid + '\',\'genderOther\',this.value);refreshTop(\'' + pid + '\')">' +
         '</div>' +
       '</div>' +
       '<div class="row2 no-print">' +
         '<div class="f"><span class="lbl">NHI Number</span>' +
           '<input class="inp" type="text" value="' + h(p.nhi) + '" placeholder="ABC1234" maxlength="8" style="text-transform:uppercase"' +
-          ' oninput="this.value=this.value.toUpperCase();setField(' + p.id + ',\'nhi\',this.value);refreshTop(' + p.id + ')">' +
+          ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value);refreshTop(\'' + pid + '\')">' +
         '</div>' +
         '<div class="f"><span class="lbl">Location</span>' +
           '<div class="loc-row">' +
-            '<select class="ward-sel" onchange="setField(' + p.id + ',\'ward\',this.value);refreshTop(' + p.id + ')">' +
+            '<select class="ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value);refreshTop(\'' + pid + '\')">' +
               WARDS.map(w => '<option value="' + w + '"' + (p.ward === w ? ' selected' : '') + '>' + w + '</option>').join('') +
             '</select>' +
             '<span class="loc-sep">Bed</span>' +
             '<input class="inp" type="text" value="' + h(p.bed) + '" placeholder="00" style="flex:0.8"' +
-            ' oninput="setField(' + p.id + ',\'bed\',this.value);refreshTop(' + p.id + ')">' +
+            ' oninput="setField(\'' + pid + '\',\'bed\',this.value);refreshTop(\'' + pid + '\')">' +
           '</div>' +
         '</div>' +
       '</div>' +
       '<div class="f"><span class="lbl">Diagnosis</span>' +
         '<input class="inp" type="text" value="' + h(p.diagnosis) + '" placeholder="Current working diagnosis"' +
-        ' oninput="setField(' + p.id + ',\'diagnosis\',this.value)">' +
+        ' oninput="setField(\'' + pid + '\',\'diagnosis\',this.value)">' +
       '</div>' +
       '<div class="f no-print"><span class="lbl">Shared Goals of Care (SGOC)</span>' +
-        '<select class="card-sel" onchange="setSgocDd(' + p.id + ',this.value)">' +
+        '<select class="card-sel" onchange="setSgocDd(\'' + pid + '\',this.value)">' +
           '<option value="">—</option>' +
           ['A','B','C','D'].map(l =>
             '<option value="' + l + '"' + (p.sgoc === l ? ' selected' : '') + '>SGOC ' + l + '</option>'
@@ -1361,18 +1678,17 @@ function cardHTML(p) {
       '</div>' +
       '<div class="f no-print"><span class="lbl">SGOC Comment</span>' +
         '<input class="inp" type="text" value="' + h(p.sgocNote || '') + '" placeholder="Additional comment..."' +
-        ' oninput="setField(' + p.id + ',\'sgocNote\',this.value);refreshSgocNote(' + p.id + ')">' +
+        ' oninput="setField(\'' + pid + '\',\'sgocNote\',this.value);refreshSgocNote(\'' + pid + '\')">' +
       '</div>' +
-      /* Assessment + Background — side by side in print via .print-row2 */
       '<div class="print-row2">' +
         '<div class="f"><span class="lbl">Assessment / Clinical Notes</span>' +
           '<textarea class="inp" rows="2" placeholder="Current assessment and clinical status..."' +
-          ' oninput="setField(' + p.id + ',\'assessment\',this.value);autoH(this)"' +
+          ' oninput="setField(\'' + pid + '\',\'assessment\',this.value);autoH(this)"' +
           ' onfocus="autoH(this)">' + h(p.assessment) + '</textarea>' +
         '</div>' +
         '<div class="f"><span class="lbl">Background / PMHx</span>' +
           '<textarea class="inp" rows="2" placeholder="Past medical history, relevant background..."' +
-          ' oninput="setField(' + p.id + ',\'background\',this.value);autoH(this)"' +
+          ' oninput="setField(\'' + pid + '\',\'background\',this.value);autoH(this)"' +
           ' onfocus="autoH(this)">' + h(p.background) + '</textarea>' +
         '</div>' +
       '</div>' +
@@ -1380,27 +1696,18 @@ function cardHTML(p) {
       '<div>' +
         '<div class="jobs-hdr">' +
           '<span class="jobs-lbl">Jobs List</span>' +
-          '<button class="btn-addjob" onclick="addJob(' + p.id + ')">' +
+          '<button class="btn-addjob" onclick="addJob(\'' + pid + '\')">' +
             '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">' +
             '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
-            'Add Job' +
-          '</button>' +
+            'Add Job</button>' +
         '</div>' +
-        '<div class="jobs-list">' + p.jobs.map(j => jobHTML(p.id, j)).join('') + '</div>' +
+        '<div class="jobs-list">' + p.jobs.map(j => jobHTML(pid, j)).join('') + '</div>' +
         '<div class="presets">' +
           PRESETS.map(pr =>
-            '<button class="pre-btn" onclick="addJob(' + p.id + ',\'' + h(pr) + '\')">' + h(pr) + '</button>'
+            '<button class="pre-btn" onclick="addJob(\'' + pid + '\',\'' + h(pr) + '\')">' + h(pr) + '</button>'
           ).join('') +
         '</div>' +
       '</div>' +
-    '</div>' +
-    '<div class="card-foot">' +
-      '<button class="btn-remove" onclick="removePatient(' + p.id + ')">' +
-        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
-        '<polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14H6L5,6"/>' +
-        '<path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4h6v2"/></svg>' +
-        'Remove Patient' +
-      '</button>' +
     '</div>' +
     '</div>'
   );
@@ -1409,7 +1716,6 @@ function cardHTML(p) {
 function render() {
   const toShow = getSorted(getFiltered());
   const grid   = document.getElementById('grid');
-
   if (!patients.length) {
     grid.innerHTML =
       '<div class="empty">' +
@@ -1432,7 +1738,6 @@ function render() {
   } else {
     grid.innerHTML = toShow.map(p => cardHTML(p)).join('');
   }
-
   updateCount();
   setTimeout(() => document.querySelectorAll('textarea').forEach(autoH), 10);
 }
@@ -1442,8 +1747,7 @@ let _pendingImport = [];
 
 function triggerImport() {
   const inp = document.getElementById('importFileInput');
-  inp.value = '';
-  inp.click();
+  inp.value = ''; inp.click();
 }
 
 function handleImportFile(input) {
@@ -1463,16 +1767,14 @@ function handleImportFile(input) {
 }
 
 function parseCSV(text) {
-  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
   if (!lines.length) return [];
-
   function parseLine(line) {
-    const fields = [];
-    let cur = '', inQ = false;
+    const fields = []; let cur = '', inQ = false;
     for (let i = 0; i < line.length; i++) {
       const c = line[i];
       if (inQ) {
-        if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+        if (c === '"' && line[i+1] === '"') { cur += '"'; i++; }
         else if (c === '"') { inQ = false; }
         else { cur += c; }
       } else {
@@ -1481,11 +1783,9 @@ function parseCSV(text) {
         else { cur += c; }
       }
     }
-    fields.push(cur.trim());
-    return fields;
+    fields.push(cur.trim()); return fields;
   }
-
-  const headers = parseLine(lines[0]).map(h => h.toLowerCase().replace(/[()]/g, '').trim());
+  const headers = parseLine(lines[0]).map(x => x.toLowerCase().replace(/[()]/g,'').trim());
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i].trim()) continue;
@@ -1502,45 +1802,26 @@ function csvRowToPatient(row) {
   let gender = '';
   if (sex === 'M' || sex === 'MALE')        gender = 'M';
   else if (sex === 'F' || sex === 'FEMALE') gender = 'F';
-
   const wardRaw = (row['ward'] || '').trim();
   const WH_WARD_MAP = {
-    'wh critical care unit': 'CCU',
-    'wh acute stroke unit':  'AT&R',
-    'wh medical ward':       'Medical',
-    'wh surgical ward':      'Surgical'
+    'wh critical care unit':'CCU','wh acute stroke unit':'AT&R',
+    'wh medical ward':'Medical','wh surgical ward':'Surgical'
   };
   const ward = WH_WARD_MAP[wardRaw.toLowerCase()]
     || WARDS.find(w => w.toLowerCase() === wardRaw.toLowerCase())
     || 'Medical';
-
   return {
-    id:          null,
-    firstName:   (row['given name']  || '').trim(),
-    lastName:    (row['family name'] || '').trim(),
-    age:         (row['age']         || '').trim(),
-    gender,
-    genderOther: '',
-    nhi:         (row['nhi']         || '').trim().toUpperCase(),
-    ward:        ward || 'Medical',
-    bed:         (row['bed']         || '').trim(),
-    diagnosis:   '',
-    sgoc:        '',
-    sgocNote:    '',
-    assessment:  '',
-    background:  '',
-    coverage:    '',
-    jobs:        []
+    firstName:(row['given name']||'').trim(), lastName:(row['family name']||'').trim(),
+    age:(row['age']||'').trim(), gender, genderOther:'',
+    nhi:(row['nhi']||'').trim().toUpperCase(), ward:ward||'Medical', bed:(row['bed']||'').trim(),
+    diagnosis:'', sgoc:'', sgocNote:'', assessment:'', background:'', coverage:'', jobs:[]
   };
 }
 
 function showImportPreview() {
-  const count    = _pendingImport.length;
-  const existing = patients.length;
-
+  const count = _pendingImport.length, existing = patients.length;
   document.getElementById('importStats').innerHTML =
     '<strong>' + count + ' patient' + (count !== 1 ? 's' : '') + '</strong> found in CSV';
-
   const MAX_PREVIEW = 10;
   let html = _pendingImport.slice(0, MAX_PREVIEW).map(p => {
     const name  = [p.firstName, p.lastName].filter(Boolean).join(' ') || '(no name)';
@@ -1548,23 +1829,15 @@ function showImportPreview() {
     if (p.nhi)  parts.push('NHI: ' + p.nhi);
     if (p.ward) parts.push(p.ward);
     if (p.bed)  parts.push('Bed ' + p.bed);
-    return '<div class="import-preview-item">' +
-      '<span class="import-preview-name">' + h(name) + '</span>' +
-      '<span class="import-preview-meta">' + h(parts.join(' · ')) + '</span>' +
-    '</div>';
+    return '<div class="import-preview-item"><span class="import-preview-name">' + h(name) + '</span>' +
+      '<span class="import-preview-meta">' + h(parts.join(' · ')) + '</span></div>';
   }).join('');
-  if (count > MAX_PREVIEW) {
-    html += '<div class="import-preview-more">and ' + (count - MAX_PREVIEW) + ' more&hellip;</div>';
-  }
+  if (count > MAX_PREVIEW) html += '<div class="import-preview-more">and ' + (count - MAX_PREVIEW) + ' more&hellip;</div>';
   document.getElementById('importPreviewList').innerHTML = html;
-
   document.getElementById('importAddBtn').textContent =
     'Add to existing' + (existing ? ' (' + existing + ' patient' + (existing !== 1 ? 's' : '') + ')' : '');
   document.getElementById('importReplaceBtn').textContent =
-    existing
-      ? 'Replace all ' + existing + ' patient' + (existing !== 1 ? 's' : '')
-      : 'Import as new list';
-
+    existing ? 'Replace all ' + existing + ' patient' + (existing !== 1 ? 's' : '') : 'Import as new list';
   document.getElementById('importModal').classList.add('open');
 }
 
@@ -1578,18 +1851,19 @@ function handleImportOverlayClick(e) {
 }
 
 function doImport(replace) {
-  // replace only ever touches the current team — other teams stay in serverData.teamData untouched
   if (replace) {
-    patients = [];
-    nextPid  = 1;
+    const saved = deepClone(patients);
+    pushUndo({ type: 'clear_all', patients: saved, teamId: currentTeam });
+    (allPatients[currentTeam] || []).forEach(p => deletePatientFromServer(p.pid, currentTeam));
+    allPatients[currentTeam] = [];
+    patients = allPatients[currentTeam];
   }
   _pendingImport.forEach(p => {
-    p.id = nextPid++;
+    p.pid = newPid(); p.teamId = currentTeam;
     patients.push(p);
+    savePatient(p.pid);
   });
-  save();
-  render();
-  closeImportModal();
+  render(); closeImportModal();
 }
 
 function openReplaceConfirmModal() {
@@ -1606,10 +1880,7 @@ function handleReplaceConfirmOverlay(e) {
   if (e.target === document.getElementById('replaceConfirmModal')) closeReplaceConfirmModal();
 }
 
-function doReplaceConfirmed() {
-  closeReplaceConfirmModal();
-  doImport(true);
-}
+function doReplaceConfirmed() { closeReplaceConfirmModal(); doImport(true); }
 
 /* ---- CLEAR ALL MODAL ---- */
 function openClearModal() {
@@ -1621,9 +1892,7 @@ function openClearModal() {
   requestAnimationFrame(() => inp.focus());
 }
 
-function closeClearModal() {
-  document.getElementById('clearModal').classList.remove('open');
-}
+function closeClearModal() { document.getElementById('clearModal').classList.remove('open'); }
 
 function handleModalOverlayClick(e) {
   if (e.target === document.getElementById('clearModal')) closeClearModal();
@@ -1636,11 +1905,18 @@ function onClearInputChange(inp) {
 }
 
 function confirmClearAll() {
-  patients = [];
-  nextPid  = 1;
-  save();
-  render();
-  closeClearModal();
+  const saved = deepClone(patients);
+  pushUndo({ type: 'clear_all', patients: saved, teamId: currentTeam });
+  (allPatients[currentTeam] || []).forEach(p => deletePatientFromServer(p.pid, currentTeam));
+  allPatients[currentTeam] = [];
+  patients = allPatients[currentTeam];
+  render(); closeClearModal();
+}
+
+/* ---- SIGN OUT ---- */
+async function doSignOut() {
+  try { await fetch('/api/logout', { method: 'POST' }); } catch (_) {}
+  window.location.href = '/login';
 }
 
 /* ---- INIT ---- */
@@ -1652,26 +1928,36 @@ function confirmClearAll() {
   await loadFromServer();
   renderTeamTabs();
   render();
-  initSync();
+  startAutoRefresh();
+
+  // Fire-and-forget orphan cleanup after initial load
+  fetch('/api/cleanup', { method: 'POST' }).catch(() => {});
+
+  document.addEventListener('click', closePtMenu);
 
   window.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      e.preventDefault();
+      performUndo();
+      return;
+    }
     if (e.key === 'Escape') {
-      if (document.getElementById('clearModal').classList.contains('open'))         closeClearModal();
-      if (document.getElementById('replaceConfirmModal').classList.contains('open')) closeReplaceConfirmModal();
-      if (document.getElementById('importModal').classList.contains('open'))         closeImportModal();
+      closeClearModal();
+      closeReplaceConfirmModal();
+      closeImportModal();
+      closeMoveModal();
+      closeDeleteModal();
+      closePtMenu();
     }
   });
 
   window.addEventListener('beforeprint', () => {
-    /* Job textareas always clip their content regardless of overflow CSS —
-       replace each with a <div> proxy that naturally flows to full height. */
     document.querySelectorAll('textarea.job-inp').forEach(ta => {
       const d = document.createElement('div');
       d.className = 'job-inp job-pxy';
       d.textContent = ta.value;
       ta.insertAdjacentElement('afterend', d);
     });
-    /* Assessment / background textareas: stamp explicit height so print CSS cannot override. */
     document.querySelectorAll('textarea.inp').forEach(el => {
       el.style.height = 'auto';
       el.style.setProperty('height', el.scrollHeight + 'px', 'important');
