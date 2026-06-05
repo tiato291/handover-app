@@ -330,7 +330,9 @@ textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-heigh
   font-family: 'SF Mono','Consolas','Menlo',monospace;
 }
 .hdr-meta-sep { font-size: 13px; color: var(--muted); flex-shrink: 0; }
-.hdr-loc-gap  { width: 8px; flex-shrink: 0; }
+.hdr-loc-gap  { width: 20px; flex-shrink: 0; }
+.hdr-loc-group { display: inline-flex; align-items: baseline; gap: 2px; flex-shrink: 0; }
+.hdr-gender-other { max-width: 10ch; font-size: 13px; }
 .hdr-demog-sep { font-size: 12px; color: var(--border); flex-shrink: 0; margin: 0 2px; font-weight: 300; }
 
 .hdr-inp {
@@ -1319,9 +1321,8 @@ function setGenderDd(pid, val) {
   savePatient(pid);
   const card = qpid(pid);
   if (!card) return;
-  const otherInp = card.querySelector('.gender-other-inp');
-  if (otherInp) otherInp.style.display = (val === 'Other') ? 'block' : 'none';
-  // Sync all gender selects in this card (header + body share .sync-gender)
+  const hdrOther = card.querySelector('.hdr-gender-other');
+  if (hdrOther) hdrOther.style.display = (val === 'Other') ? '' : 'none';
   card.querySelectorAll('.sync-gender').forEach(sel => {
     if (sel !== document.activeElement) sel.value = val;
   });
@@ -1714,11 +1715,14 @@ function cardHTML(p) {
           '<input class="hdr-inp hdr-age-inp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="' + h(p.age) + '" placeholder="Age"' +
             ' oninput="this.value=this.value.replace(/[^0-9]/g,\'\');setField(\'' + pid + '\',\'age\',this.value)">' +
           '<select class="hdr-sel hdr-gender-sel sync-gender" onchange="setGenderDd(\'' + pid + '\',this.value)">' +
-            '<option value="">—</option>' +
-            '<option value="M"' + (p.gender === 'M' ? ' selected' : '') + '>M</option>' +
-            '<option value="F"' + (p.gender === 'F' ? ' selected' : '') + '>F</option>' +
+            '<option value="">Gender</option>' +
+            '<option value="M"' + (p.gender === 'M' ? ' selected' : '') + '>Male</option>' +
+            '<option value="F"' + (p.gender === 'F' ? ' selected' : '') + '>Female</option>' +
             '<option value="Other"' + (p.gender === 'Other' ? ' selected' : '') + '>Other</option>' +
           '</select>' +
+          '<input class="hdr-inp hdr-gender-other" type="text" placeholder="specify..." value="' + h(p.genderOther || '') + '"' +
+            ' style="display:' + (p.gender === 'Other' ? '' : 'none') + '"' +
+            ' oninput="setField(\'' + pid + '\',\'genderOther\',this.value)">' +
         '</div>' +
         /* ── Row 2: NHI + Location ── */
         '<div class="pt-hdr-meta">' +
@@ -1726,12 +1730,14 @@ function cardHTML(p) {
           '<input class="hdr-inp hdr-nhi-inp" type="text" value="' + h(p.nhi) + '" placeholder="—" maxlength="8"' +
             ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value)">' +
           '<span class="hdr-loc-gap"></span>' +
-          '<select class="hdr-sel hdr-ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value)">' +
-            WARDS.map(w => '<option value="' + w + '"' + (p.ward === w ? ' selected' : '') + '>' + w + '</option>').join('') +
-          '</select>' +
-          '<span class="hdr-meta-lbl">Bed</span>' +
-          '<input class="hdr-inp hdr-bed-inp" type="text" value="' + h(p.bed) + '" placeholder="—"' +
-            ' oninput="setField(\'' + pid + '\',\'bed\',this.value)">' +
+          '<span class="hdr-loc-group">' +
+            '<select class="hdr-sel hdr-ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value)">' +
+              WARDS.map(w => '<option value="' + w + '"' + (p.ward === w ? ' selected' : '') + '>' + w + '</option>').join('') +
+            '</select>' +
+            '<span class="hdr-meta-lbl">Bed</span>' +
+            '<input class="hdr-inp hdr-bed-inp" type="text" value="' + h(p.bed) + '" placeholder="—"' +
+              ' oninput="setField(\'' + pid + '\',\'bed\',this.value)">' +
+          '</span>' +
         '</div>' +
         '<div class="pt-sgoc-note">' + h(p.sgocNote || '') + '</div>' +
       '</div>' +
