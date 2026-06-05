@@ -734,6 +734,17 @@ body.view-mode .edit-only-item { display: none !important; }
 .search-inp::placeholder { color: var(--muted); }
 
 
+/* ---- UNDO / REDO BUTTONS ---- */
+.btn-undoredo {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 6px;
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.82);
+  border: 1px solid rgba(255,255,255,0.22);
+  cursor: pointer; flex-shrink: 0; transition: background 0.15s, opacity 0.15s;
+}
+.btn-undoredo:hover:not(:disabled) { background: rgba(255,255,255,0.22); color: #fff; }
+.btn-undoredo:disabled { opacity: 0.28; cursor: not-allowed; }
+
 /* ---- DARK MODE BUTTON (half-circle icon) ---- */
 .btn-halfcircle {
   display: flex; align-items: center; justify-content: center;
@@ -847,6 +858,16 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
       </svg>
     </button>
     <input type="file" id="importFileInput" accept=".csv,text/csv" style="display:none" onchange="handleImportFile(this)">
+    <button class="btn-undoredo" id="undoBtn" onclick="performUndo()" title="Undo (⌘Z)" disabled>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10a9 9 0 1 0 9-9"/><polyline points="3 4 3 10 9 10"/>
+      </svg>
+    </button>
+    <button class="btn-undoredo" id="redoBtn" onclick="performRedo()" title="Redo (⌘⇧Z)" disabled>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10a9 9 0 1 1-9-9"/><polyline points="21 4 21 10 15 10"/>
+      </svg>
+    </button>
     <button class="btn-add-pt" onclick="addPatient()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add Patient
@@ -1079,6 +1100,7 @@ let currentSort   = 'default';
 let editMode      = true;
 
 let undoStack        = [];    // max 10 steps
+let redoStack        = [];    // max 10 steps
 let _openMenuPid     = null;  // currently open three-dot menu pid
 let _movePid         = null;
 let _moveToTeam      = null;
@@ -1608,7 +1630,10 @@ function updateJobText(pid, jid, text) {
 function deleteJob(pid, jid) {
   const p = findPatient(pid);
   if (!p) return;
-  p.jobs = p.jobs.filter(j => j.id !== jid);
+  const idx = p.jobs.findIndex(j => j.id === jid);
+  if (idx === -1) return;
+  pushUndo({ type: 'delete_job', pid, teamId: p.teamId, job: deepClone(p.jobs[idx]), index: idx });
+  p.jobs.splice(idx, 1);
   savePatient(pid);
   renderJobs(pid);
 }
@@ -1809,6 +1834,8 @@ function confirmDeletePatient() {
 function pushUndo(action) {
   undoStack.push(action);
   if (undoStack.length > 10) undoStack.shift();
+  redoStack.length = 0;
+  updateUndoRedoBtns();
 }
 
 async function performUndo() {
@@ -1819,6 +1846,7 @@ async function performUndo() {
     case 'add': {
       const p = findPatient(action.pid);
       if (p) {
+        redoStack.push({ type: 'redo_add', patient: deepClone(p), teamId: action.teamId });
         allPatients[action.teamId] = (allPatients[action.teamId] || []).filter(x => x.pid !== action.pid);
         if (action.teamId === currentTeam) patients = allPatients[currentTeam];
         await deletePatientFromServer(action.pid, action.teamId);
@@ -1828,6 +1856,7 @@ async function performUndo() {
     }
     case 'delete': {
       const teamId = action.teamId;
+      redoStack.push({ type: 'redo_delete', pid: action.patient.pid, teamId, patient: deepClone(action.patient) });
       if (!allPatients[teamId]) allPatients[teamId] = [];
       allPatients[teamId].push(action.patient);
       if (teamId === currentTeam) patients = allPatients[currentTeam];
@@ -1837,6 +1866,7 @@ async function performUndo() {
     }
     case 'move': {
       const { patient, fromTeam, toTeam } = action;
+      redoStack.push({ type: 'redo_move', patient: deepClone(patient), fromTeam, toTeam });
       allPatients[toTeam] = (allPatients[toTeam] || []).filter(x => x.pid !== patient.pid);
       if (!allPatients[fromTeam]) allPatients[fromTeam] = [];
       const restored = { ...patient, teamId: fromTeam };
@@ -1855,6 +1885,7 @@ async function performUndo() {
       if (p) {
         const j = p.jobs.find(x => x.id === action.jid);
         if (j) {
+          redoStack.push({ type: 'redo_toggle', pid: action.pid, teamId: action.teamId, jid: action.jid, targetDone: j.done });
           j.done = action.prevDone;
           if (action.prevDone && action.prevCompletedAt) { j.completedAt = action.prevCompletedAt; }
           else { delete j.completedAt; }
@@ -1874,18 +1905,127 @@ async function performUndo() {
     }
     case 'clear_all': {
       const { patients: saved, teamId } = action;
+      redoStack.push({ type: 'redo_clear', teamId });
       if (!allPatients[teamId]) allPatients[teamId] = [];
-      for (const p of saved) {
-        allPatients[teamId].push(p);
-        savePatient(p.pid);
-      }
+      for (const p of saved) { allPatients[teamId].push(p); savePatient(p.pid); }
       if (teamId === currentTeam) patients = allPatients[currentTeam];
       render();
       break;
     }
+    case 'delete_job': {
+      const { pid, job, index } = action;
+      const p = findPatient(pid);
+      if (p) {
+        redoStack.push({ type: 'redo_delete_job', pid, teamId: action.teamId, job: deepClone(job) });
+        p.jobs.splice(index, 0, job);
+        savePatient(pid);
+        renderJobs(pid);
+      }
+      break;
+    }
   }
 
+  if (redoStack.length > 10) redoStack.shift();
+  updateUndoRedoBtns();
   showToast('Undone');
+}
+
+function updateUndoRedoBtns() {
+  const u = document.getElementById('undoBtn');
+  const r = document.getElementById('redoBtn');
+  if (u) u.disabled = undoStack.length === 0;
+  if (r) r.disabled = redoStack.length === 0;
+}
+
+async function performRedo() {
+  const action = redoStack.pop();
+  if (!action) return;
+
+  switch (action.type) {
+    case 'redo_add': {
+      const { patient, teamId } = action;
+      undoStack.push({ type: 'add', pid: patient.pid, teamId });
+      if (!allPatients[teamId]) allPatients[teamId] = [];
+      allPatients[teamId].push(patient);
+      if (teamId === currentTeam) patients = allPatients[currentTeam];
+      savePatient(patient.pid);
+      render();
+      break;
+    }
+    case 'redo_delete': {
+      const { pid, teamId, patient } = action;
+      undoStack.push({ type: 'delete', patient: deepClone(patient), teamId });
+      allPatients[teamId] = (allPatients[teamId] || []).filter(x => x.pid !== pid);
+      if (teamId === currentTeam) patients = allPatients[currentTeam];
+      await deletePatientFromServer(pid, teamId);
+      render();
+      break;
+    }
+    case 'redo_move': {
+      const { patient, fromTeam, toTeam } = action;
+      undoStack.push({ type: 'move', patient: deepClone(patient), fromTeam, toTeam });
+      allPatients[fromTeam] = (allPatients[fromTeam] || []).filter(x => x.pid !== patient.pid);
+      if (!allPatients[toTeam]) allPatients[toTeam] = [];
+      const moved = { ...patient, teamId: toTeam };
+      allPatients[toTeam].push(moved);
+      if (fromTeam === currentTeam || toTeam === currentTeam) patients = allPatients[currentTeam];
+      await deletePatientFromServer(patient.pid, fromTeam);
+      _lastSaveMs = Date.now();
+      fetch('/api/patient', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(moved)
+      }).catch(e => console.error('[redo move]', e));
+      render();
+      break;
+    }
+    case 'redo_toggle': {
+      const p = findPatient(action.pid);
+      if (p) {
+        const j = p.jobs.find(x => x.id === action.jid);
+        if (j) {
+          undoStack.push({ type: 'toggle_job', pid: action.pid, teamId: action.teamId, jid: action.jid, prevDone: j.done, prevCompletedAt: j.completedAt });
+          j.done = action.targetDone;
+          if (j.done) { j.completedAt = Date.now(); } else { delete j.completedAt; }
+          savePatient(action.pid);
+          const el = document.querySelector('[data-jid="' + action.jid + '"]');
+          if (el) {
+            el.classList.toggle('done', j.done);
+            const cb = el.querySelector('.job-cb');
+            if (cb) cb.checked = j.done;
+            const timeEl = el.querySelector('.job-time');
+            if (timeEl) timeEl.textContent = j.done && j.completedAt ? ' ✅ ' + fmtCompletedAt(j.completedAt) : '';
+          }
+          updateJobsCounter(action.pid);
+        }
+      }
+      break;
+    }
+    case 'redo_clear': {
+      const { teamId } = action;
+      const saved = deepClone(allPatients[teamId] || []);
+      undoStack.push({ type: 'clear_all', patients: saved, teamId });
+      (allPatients[teamId] || []).forEach(p => deletePatientFromServer(p.pid, teamId));
+      allPatients[teamId] = [];
+      if (teamId === currentTeam) patients = allPatients[currentTeam];
+      render();
+      break;
+    }
+    case 'redo_delete_job': {
+      const { pid, job, teamId } = action;
+      const p = findPatient(pid);
+      if (p) {
+        const idx = p.jobs.findIndex(j => j.id === job.id);
+        undoStack.push({ type: 'delete_job', pid, teamId, job: deepClone(job), index: idx !== -1 ? idx : p.jobs.length });
+        if (idx !== -1) p.jobs.splice(idx, 1);
+        savePatient(pid);
+        renderJobs(pid);
+      }
+      break;
+    }
+  }
+
+  if (undoStack.length > 10) undoStack.shift();
+  updateUndoRedoBtns();
+  showToast('Redone');
 }
 
 /* ---- TOAST ---- */
@@ -2353,7 +2493,12 @@ async function doSignOut() {
   });
 
   window.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
+      e.preventDefault();
+      performRedo();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
       e.preventDefault();
       performUndo();
       return;
