@@ -193,7 +193,8 @@ body {
 .card:hover { box-shadow: 0 5px 14px rgba(0,0,0,0.1); }
 
 .card-top {
-  padding: 12px 16px; display: flex; align-items: flex-start;
+  position: relative;
+  padding: 10px 44px 12px 16px; display: flex; align-items: flex-start;
   justify-content: space-between; gap: 12px; border-bottom: 1px solid;
   print-color-adjust: exact; -webkit-print-color-adjust: exact;
 }
@@ -325,10 +326,10 @@ textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-heigh
   display: flex; align-items: center; gap: 3px; margin-top: 4px; flex-wrap: wrap; min-width: 0;
 }
 .hdr-meta-lbl {
-  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
-  color: var(--muted); flex-shrink: 0; font-family: 'SF Mono','Consolas','Menlo',monospace;
+  font-size: 13px; color: var(--muted); flex-shrink: 0;
+  font-family: 'SF Mono','Consolas','Menlo',monospace;
 }
-.hdr-meta-sep { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+.hdr-meta-sep { font-size: 13px; color: var(--muted); flex-shrink: 0; }
 .hdr-demog-sep { font-size: 12px; color: var(--border); flex-shrink: 0; margin: 0 2px; font-weight: 300; }
 
 .hdr-inp {
@@ -343,7 +344,7 @@ textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-heigh
 .hdr-inp::placeholder { color: #c0c8d4; font-weight: 400; }
 
 .hdr-name-inp { font-size: 15px; font-weight: 700; max-width: 14ch; }
-.hdr-age-inp  { font-size: 13px; color: var(--muted); width: 4ch; max-width: 5ch; }
+.hdr-age-inp  { font-size: 13px; color: var(--muted); width: 5ch; max-width: 6ch; }
 .hdr-nhi-inp  {
   font-size: 13px; font-family: 'SF Mono','Consolas','Menlo',monospace;
   letter-spacing: 0.3px; color: var(--muted); max-width: 9ch; text-transform: uppercase;
@@ -372,7 +373,7 @@ textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-heigh
   font-size: 11px; font-weight: 700; letter-spacing: 0.2px;
   white-space: nowrap; cursor: pointer; font-family: inherit; outline: none;
   -webkit-appearance: none; appearance: none;
-  border: 1.5px solid; text-align: center;
+  border: 1.5px solid; text-align: center; text-align-last: center;
   transition: filter 0.12s;
   print-color-adjust: exact; -webkit-print-color-adjust: exact;
 }
@@ -547,7 +548,7 @@ body.view-mode .btn-clear-all { display: none !important; }
 }
 
 /* ---- THREE-DOT MENU ---- */
-.pt-menu-wrap { position: relative; margin-top: 2px; }
+.pt-menu-wrap { position: absolute; top: 6px; right: 8px; }
 .btn-pt-menu {
   background: none; border: none; cursor: pointer;
   color: var(--muted); font-size: 20px; line-height: 1;
@@ -1010,8 +1011,9 @@ function normalizePatients() {
     if (p.age         === undefined) p.age         = '';
     if (p.gender      === undefined) p.gender      = '';
     if (p.genderOther === undefined) p.genderOther = '';
-    if (!p.ward) p.ward = 'Medical';
-    if (!p.jobs) p.jobs = [];
+    if (!p.ward)     p.ward     = 'Medical';
+    if (!p.jobs)     p.jobs     = [];
+    if (!p.coverage) p.coverage = 'No Jobs';
   });
 }
 
@@ -1330,11 +1332,12 @@ function setCoverage(pid, val) {
   savePatient(pid);
   const card = qpid(pid);
   if (!card) return;
-  const slug = val ? (COV_SLUG[val] || '') : '';
+  const eff  = val || 'No Jobs';
+  const slug = COV_SLUG[eff] || '';
   const covSel = card.querySelector('.hdr-cov-sel');
   if (covSel) {
-    covSel.className = 'hdr-cov-sel' + (slug ? ' cov-' + slug : ' cov-none');
-    covSel.value = val;
+    covSel.className = 'hdr-cov-sel cov-' + slug;
+    covSel.value = eff;
   }
   updateCount();
 }
@@ -1693,7 +1696,8 @@ function renderJobs(pid) {
 
 function cardHTML(p) {
   const pid     = p.pid;
-  const covSlug = p.coverage ? (COV_SLUG[p.coverage] || '') : '';
+  const covEff  = p.coverage || 'No Jobs';
+  const covSlug = COV_SLUG[covEff] || '';
   return (
     '<div class="card" data-pid="' + pid + '">' +
     '<div class="card-top' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : '') + '">' +
@@ -1719,8 +1723,7 @@ function cardHTML(p) {
           '<span class="hdr-meta-lbl">NHI</span>' +
           '<input class="hdr-inp hdr-nhi-inp" type="text" value="' + h(p.nhi) + '" placeholder="—" maxlength="8"' +
             ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value)">' +
-          '<span class="hdr-meta-sep">&bull;</span>' +
-          '<select class="hdr-sel hdr-ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value)">' +
+          '<select class="hdr-sel hdr-ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value)" style="margin-left:4px">' +
             WARDS.map(w => '<option value="' + w + '"' + (p.ward === w ? ' selected' : '') + '>' + w + '</option>').join('') +
           '</select>' +
           '<span class="hdr-meta-sep">Bed</span>' +
@@ -1734,16 +1737,15 @@ function cardHTML(p) {
           '<option value="">SGOC</option>' +
           ['A','B','C','D'].map(l => '<option value="' + l + '"' + (p.sgoc === l ? ' selected' : '') + '>SGOC ' + l + '</option>').join('') +
         '</select>' +
-        '<select class="hdr-cov-sel' + (covSlug ? ' cov-' + covSlug : ' cov-none') + '" onchange="setCoverage(\'' + pid + '\',this.value)">' +
-          '<option value="">Coverage</option>' +
-          COV.map(o => '<option value="' + h(o) + '"' + (p.coverage === o ? ' selected' : '') + '>' + h(o) + '</option>').join('') +
+        '<select class="hdr-cov-sel cov-' + covSlug + '" onchange="setCoverage(\'' + pid + '\',this.value)">' +
+          COV.map(o => '<option value="' + h(o) + '"' + (covEff === o ? ' selected' : '') + '>' + h(o) + '</option>').join('') +
         '</select>' +
-        '<div class="pt-menu-wrap no-print">' +
-          '<button class="btn-pt-menu" onclick="togglePtMenu(event,\'' + pid + '\')" title="Options">&#8942;</button>' +
-          '<div class="pt-dropdown" id="pt-menu-' + pid + '" style="display:none">' +
-            '<button onclick="openMoveModal(\'' + pid + '\')">Move Patient</button>' +
-            '<button class="danger" onclick="openDeleteModal(\'' + pid + '\')">Delete Patient</button>' +
-          '</div>' +
+      '</div>' +
+      '<div class="pt-menu-wrap no-print">' +
+        '<button class="btn-pt-menu" onclick="togglePtMenu(event,\'' + pid + '\')" title="Options">&#8942;</button>' +
+        '<div class="pt-dropdown" id="pt-menu-' + pid + '" style="display:none">' +
+          '<button onclick="openMoveModal(\'' + pid + '\')">Move Patient</button>' +
+          '<button class="danger" onclick="openDeleteModal(\'' + pid + '\')">Delete Patient</button>' +
         '</div>' +
       '</div>' +
     '</div>' +
