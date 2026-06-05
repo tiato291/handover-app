@@ -343,13 +343,13 @@ textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-heigh
 .hdr-inp::placeholder { color: #c0c8d4; font-weight: 400; }
 
 .hdr-name-inp { font-size: 15px; font-weight: 700; max-width: 14ch; }
-.hdr-age-inp  { font-size: 12px; font-weight: 600; color: var(--muted); width: 4ch; max-width: 5ch; }
+.hdr-age-inp  { font-size: 13px; color: var(--muted); width: 4ch; max-width: 5ch; }
 .hdr-nhi-inp  {
-  font-size: 11px; font-family: 'SF Mono','Consolas','Menlo',monospace;
+  font-size: 13px; font-family: 'SF Mono','Consolas','Menlo',monospace;
   letter-spacing: 0.3px; color: var(--muted); max-width: 9ch; text-transform: uppercase;
 }
 .hdr-bed-inp  {
-  font-size: 11px; font-family: 'SF Mono','Consolas','Menlo',monospace;
+  font-size: 13px; font-family: 'SF Mono','Consolas','Menlo',monospace;
   color: var(--muted); max-width: 5ch;
 }
 
@@ -363,11 +363,11 @@ textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-heigh
 }
 .hdr-sel:hover  { background: rgba(0,0,0,0.04); border-bottom-color: rgba(0,0,0,0.18); }
 .hdr-sel:focus  { background: rgba(42,92,138,0.06); border-bottom-color: var(--pri); color: var(--text); }
-.hdr-gender-sel { font-size: 12px; font-weight: 600; }
-.hdr-ward-sel   { font-size: 11px; font-family: 'SF Mono','Consolas','Menlo',monospace; max-width: 9ch; }
+.hdr-gender-sel { font-size: 13px; }
+.hdr-ward-sel   { font-size: 13px; font-family: 'SF Mono','Consolas','Menlo',monospace; }
 
-/* SGOC badge-select — replaces the read-only s-badge in the header */
-.hdr-sgoc-sel {
+/* Shared styles for badge-selects (SGOC + Coverage) in the card header */
+.hdr-sgoc-sel, .hdr-cov-sel {
   padding: 4px 9px; border-radius: 20px;
   font-size: 11px; font-weight: 700; letter-spacing: 0.2px;
   white-space: nowrap; cursor: pointer; font-family: inherit; outline: none;
@@ -376,12 +376,19 @@ textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-heigh
   transition: filter 0.12s;
   print-color-adjust: exact; -webkit-print-color-adjust: exact;
 }
-.hdr-sgoc-sel:hover { filter: brightness(0.94); }
+.hdr-sgoc-sel:hover, .hdr-cov-sel:hover { filter: brightness(0.94); }
+
 .hdr-sgoc-sel.sgoc-none { background: #eef0f4; color: var(--muted); border-color: var(--border); }
 .hdr-sgoc-sel.sgoc-a { background: var(--sgoc-a-bg); color: var(--sgoc-a); border-color: var(--sgoc-a-bd); }
 .hdr-sgoc-sel.sgoc-b { background: var(--sgoc-b-bg); color: var(--sgoc-b); border-color: var(--sgoc-b-bd); }
 .hdr-sgoc-sel.sgoc-c { background: var(--sgoc-c-bg); color: var(--sgoc-c); border-color: var(--sgoc-c-bd); }
 .hdr-sgoc-sel.sgoc-d { background: var(--sgoc-d-bg); color: var(--sgoc-d); border-color: var(--sgoc-d-bd); }
+
+.hdr-cov-sel.cov-none    { background: #eef0f4; color: var(--muted); border-color: var(--border); }
+.hdr-cov-sel.cov-smo     { background: var(--cov-smo-bg);     color: var(--cov-smo);     border-color: var(--cov-smo-bd); }
+.hdr-cov-sel.cov-rmo     { background: var(--cov-rmo-bg);     color: var(--cov-rmo);     border-color: var(--cov-rmo-bd); }
+.hdr-cov-sel.cov-results { background: var(--cov-results-bg); color: var(--cov-results); border-color: var(--cov-results-bd); }
+.hdr-cov-sel.cov-nojobs  { background: var(--cov-nojobs-bg);  color: var(--cov-nojobs);  border-color: var(--cov-nojobs-bd); }
 
 /* ---- VIEW MODE ---- */
 body.view-mode .inp,
@@ -390,7 +397,8 @@ body.view-mode .ward-sel,
 body.view-mode textarea.job-inp,
 body.view-mode .hdr-inp,
 body.view-mode .hdr-sel,
-body.view-mode .hdr-sgoc-sel { pointer-events: none; }
+body.view-mode .hdr-sgoc-sel,
+body.view-mode .hdr-cov-sel { pointer-events: none; }
 body.view-mode .no-print,
 body.view-mode .btn-addjob,
 body.view-mode .presets,
@@ -627,10 +635,11 @@ body.view-mode .btn-clear-all { display: none !important; }
   .hdr-meta-sep, .hdr-demog-sep { font-size: 7pt !important; }
   .pt-hdr-main { margin-bottom: 0; }
   .pt-hdr-meta { margin-top: 1pt; }
-  .hdr-sgoc-sel {
+  .hdr-sgoc-sel, .hdr-cov-sel {
     padding: 1.5pt 6pt !important; font-size: 7pt !important; border-radius: 10pt !important;
     print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important;
   }
+  .hdr-cov-sel.cov-none { display: none !important; }
   .pt-name { font-size: 9pt !important; font-weight: 700; white-space: normal !important; }
   .pt-demog { font-size: 7.5pt !important; }
   .pt-meta { font-size: 7pt !important; margin-top: 1pt; }
@@ -1259,7 +1268,7 @@ function addPatient() {
   const p = {
     pid: newPid(), teamId: currentTeam,
     firstName:'', lastName:'', age:'', gender:'', genderOther:'', nhi:'', ward:'Medical', bed:'',
-    diagnosis:'', sgoc:'', sgocNote:'', assessment:'', background:'', coverage:'', jobs:[]
+    diagnosis:'', sgoc:'', sgocNote:'', assessment:'', background:'', coverage:'No Jobs', jobs:[]
   };
   patients.push(p);
   pushUndo({ type: 'add', pid: p.pid, teamId: currentTeam });
@@ -1322,10 +1331,10 @@ function setCoverage(pid, val) {
   const card = qpid(pid);
   if (!card) return;
   const slug = val ? (COV_SLUG[val] || '') : '';
-  const covBadge = card.querySelector('.cov-badge');
-  if (covBadge) {
-    covBadge.className = 'cov-badge' + (slug ? ' cov-' + slug : ' cov-none');
-    covBadge.textContent = val || '';
+  const covSel = card.querySelector('.hdr-cov-sel');
+  if (covSel) {
+    covSel.className = 'hdr-cov-sel' + (slug ? ' cov-' + slug : ' cov-none');
+    covSel.value = val;
   }
   updateCount();
 }
@@ -1691,7 +1700,7 @@ function cardHTML(p) {
       '<div class="card-top-left">' +
         /* ── Row 1: Names + Age + Gender ── */
         '<div class="pt-hdr-main">' +
-          '<input class="hdr-inp hdr-name-inp" type="text" value="' + h(p.firstName) + '" placeholder="First name"' +
+          '<input class="hdr-inp hdr-name-inp f-fn" type="text" value="' + h(p.firstName) + '" placeholder="First name"' +
             ' oninput="setField(\'' + pid + '\',\'firstName\',this.value)">' +
           '<input class="hdr-inp hdr-name-inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
             ' oninput="setField(\'' + pid + '\',\'lastName\',this.value)">' +
@@ -1719,19 +1728,16 @@ function cardHTML(p) {
             ' oninput="setField(\'' + pid + '\',\'bed\',this.value)">' +
         '</div>' +
         '<div class="pt-sgoc-note">' + h(p.sgocNote || '') + '</div>' +
-        '<div class="cov-hdr no-print">' +
-          '<select class="card-sel" onchange="setCoverage(\'' + pid + '\',this.value)">' +
-            '<option value="">— Weekend Coverage —</option>' +
-            COV.map(o => '<option value="' + h(o) + '"' + (p.coverage === o ? ' selected' : '') + '>' + h(o) + '</option>').join('') +
-          '</select>' +
-        '</div>' +
       '</div>' +
       '<div class="card-badges">' +
         '<select class="hdr-sgoc-sel' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : ' sgoc-none') + '" onchange="setSgocDd(\'' + pid + '\',this.value)">' +
           '<option value="">SGOC</option>' +
           ['A','B','C','D'].map(l => '<option value="' + l + '"' + (p.sgoc === l ? ' selected' : '') + '>SGOC ' + l + '</option>').join('') +
         '</select>' +
-        '<span class="cov-badge' + (covSlug ? ' cov-' + covSlug : ' cov-none') + '">' + h(p.coverage || '') + '</span>' +
+        '<select class="hdr-cov-sel' + (covSlug ? ' cov-' + covSlug : ' cov-none') + '" onchange="setCoverage(\'' + pid + '\',this.value)">' +
+          '<option value="">Coverage</option>' +
+          COV.map(o => '<option value="' + h(o) + '"' + (p.coverage === o ? ' selected' : '') + '>' + h(o) + '</option>').join('') +
+        '</select>' +
         '<div class="pt-menu-wrap no-print">' +
           '<button class="btn-pt-menu" onclick="togglePtMenu(event,\'' + pid + '\')" title="Options">&#8942;</button>' +
           '<div class="pt-dropdown" id="pt-menu-' + pid + '" style="display:none">' +
@@ -1742,49 +1748,6 @@ function cardHTML(p) {
       '</div>' +
     '</div>' +
     '<div class="card-body">' +
-      '<div class="row2 no-print">' +
-        '<div class="f"><span class="lbl">First Name</span>' +
-          '<input class="inp f-fn" type="text" value="' + h(p.firstName) + '" placeholder="First name"' +
-          ' oninput="setField(\'' + pid + '\',\'firstName\',this.value);refreshHeader(\'' + pid + '\')">' +
-        '</div>' +
-        '<div class="f"><span class="lbl">Last Name</span>' +
-          '<input class="inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
-          ' oninput="setField(\'' + pid + '\',\'lastName\',this.value);refreshHeader(\'' + pid + '\')">' +
-        '</div>' +
-      '</div>' +
-      '<div class="row2 no-print">' +
-        '<div class="f"><span class="lbl">Age</span>' +
-          '<input class="inp" type="number" min="0" max="150" value="' + h(p.age) + '" placeholder="—"' +
-          ' oninput="setField(\'' + pid + '\',\'age\',this.value);refreshHeader(\'' + pid + '\')">' +
-        '</div>' +
-        '<div class="f"><span class="lbl">Gender</span>' +
-          '<select class="card-sel sync-gender" onchange="setGenderDd(\'' + pid + '\',this.value)">' +
-            '<option value="">—</option>' +
-            '<option value="M"' + (p.gender === 'M' ? ' selected' : '') + '>Male</option>' +
-            '<option value="F"' + (p.gender === 'F' ? ' selected' : '') + '>Female</option>' +
-            '<option value="Other"' + (p.gender === 'Other' ? ' selected' : '') + '>Other</option>' +
-          '</select>' +
-          '<input class="inp gender-other-inp" type="text" value="' + h(p.genderOther || '') + '" placeholder="Please specify..."' +
-            ' style="display:' + (p.gender === 'Other' ? 'block' : 'none') + ';margin-top:4px"' +
-            ' oninput="setField(\'' + pid + '\',\'genderOther\',this.value)">' +
-        '</div>' +
-      '</div>' +
-      '<div class="row2 no-print">' +
-        '<div class="f"><span class="lbl">NHI Number</span>' +
-          '<input class="inp" type="text" value="' + h(p.nhi) + '" placeholder="ABC1234" maxlength="8" style="text-transform:uppercase"' +
-          ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value);refreshHeader(\'' + pid + '\')">' +
-        '</div>' +
-        '<div class="f"><span class="lbl">Location</span>' +
-          '<div class="loc-row">' +
-            '<select class="ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value);refreshHeader(\'' + pid + '\')">' +
-              WARDS.map(w => '<option value="' + w + '"' + (p.ward === w ? ' selected' : '') + '>' + w + '</option>').join('') +
-            '</select>' +
-            '<span class="loc-sep">Bed</span>' +
-            '<input class="inp" type="text" value="' + h(p.bed) + '" placeholder="00" style="flex:0.8"' +
-            ' oninput="setField(\'' + pid + '\',\'bed\',this.value);refreshHeader(\'' + pid + '\')">' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
       '<div class="f"><span class="lbl">Diagnosis</span>' +
         '<input class="inp" type="text" value="' + h(p.diagnosis) + '" placeholder="Current working diagnosis"' +
         ' oninput="setField(\'' + pid + '\',\'diagnosis\',this.value)">' +
