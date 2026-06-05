@@ -305,6 +305,20 @@ textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-heigh
 .job:hover .job-del { opacity: 1; }
 .job-del:hover { color: #c0392b; }
 
+/* ---- JOB DRAG HANDLE ---- */
+.job-drag-handle {
+  color: var(--muted); cursor: grab; opacity: 0; flex-shrink: 0;
+  display: flex; align-items: flex-start; padding: 3px 2px 0 0;
+  transition: opacity 0.15s; user-select: none; -webkit-user-select: none;
+}
+.job:hover .job-drag-handle { opacity: 0.35; }
+.job-drag-handle:hover { opacity: 0.75 !important; }
+.job-drag-handle:active { cursor: grabbing; }
+.job.dragging { opacity: 0.3; }
+.job.drag-above { box-shadow: 0 -2px 0 var(--pri); border-radius: 0; }
+.job.drag-below { box-shadow: 0 2px 0 var(--pri); border-radius: 0; }
+body.view-mode .job-drag-handle { display: none !important; }
+
 .presets { display: flex; flex-wrap: wrap; gap: 5px; padding-top: 6px; }
 .pre-btn {
   padding: 3px 9px; border-radius: 12px; border: 1px solid var(--border);
@@ -1599,6 +1613,75 @@ function deleteJob(pid, jid) {
   renderJobs(pid);
 }
 
+/* ---- JOB DRAG AND DROP ---- */
+let _dragPid   = null;
+let _dragJid   = null;
+let _dragOver  = null;   // { jid, before }
+let _allowDrag = false;
+
+function jobDragHandleDown() {
+  _allowDrag = true;
+  const up = () => { _allowDrag = false; document.removeEventListener('mouseup', up); };
+  document.addEventListener('mouseup', up);
+}
+
+function onJobDragStart(event, pid, jid) {
+  if (!editMode || !_allowDrag) { event.preventDefault(); return; }
+  _dragPid = pid;
+  _dragJid = jid;
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', String(jid));
+  setTimeout(() => {
+    const el = document.querySelector('[data-jid="' + jid + '"]');
+    if (el) el.classList.add('dragging');
+  }, 0);
+}
+
+function onJobDragOver(event, pid, jid) {
+  if (_dragPid !== pid || _dragJid === jid) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  const rect = event.currentTarget.getBoundingClientRect();
+  const before = event.clientY < rect.top + rect.height / 2;
+  const card = qpid(pid);
+  if (card) card.querySelectorAll('.job').forEach(el => el.classList.remove('drag-above','drag-below'));
+  event.currentTarget.classList.add(before ? 'drag-above' : 'drag-below');
+  _dragOver = { jid, before };
+}
+
+function onJobDragLeave(event) {
+  if (!event.currentTarget.contains(event.relatedTarget)) {
+    event.currentTarget.classList.remove('drag-above', 'drag-below');
+  }
+}
+
+function onJobDrop(event, pid) {
+  event.preventDefault();
+  if (_dragPid !== pid || !_dragOver || !_dragJid) return;
+  const p = findPatient(pid);
+  if (!p) return;
+  const fromIdx = p.jobs.findIndex(j => j.id === _dragJid);
+  if (fromIdx === -1) return;
+  const [moved] = p.jobs.splice(fromIdx, 1);
+  const newTargetIdx = p.jobs.findIndex(j => j.id === _dragOver.jid);
+  if (newTargetIdx !== -1) {
+    p.jobs.splice(_dragOver.before ? newTargetIdx : newTargetIdx + 1, 0, moved);
+  } else {
+    p.jobs.push(moved);
+  }
+  _dragPid = _dragJid = _dragOver = null;
+  _allowDrag = false;
+  savePatient(pid);
+  renderJobs(pid);
+}
+
+function onJobDragEnd(event, pid) {
+  _allowDrag = false;
+  _dragPid = _dragJid = _dragOver = null;
+  const card = qpid(pid);
+  if (card) card.querySelectorAll('.job').forEach(el => el.classList.remove('dragging','drag-above','drag-below'));
+}
+
 /* ---- THREE-DOT MENU ---- */
 function togglePtMenu(event, pid) {
   event.stopPropagation();
@@ -1851,7 +1934,19 @@ function autoH(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight
 /* ---- RENDER ---- */
 function jobHTML(pid, j) {
   const ts = j.done && j.completedAt ? ' ✅ ' + fmtCompletedAt(j.completedAt) : '';
-  return '<div class="job' + (j.done ? ' done' : '') + '" data-jid="' + j.id + '">' +
+  return '<div class="job' + (j.done ? ' done' : '') + '" data-jid="' + j.id + '" draggable="true"' +
+    ' ondragstart="onJobDragStart(event,\'' + pid + '\',' + j.id + ')"' +
+    ' ondragover="onJobDragOver(event,\'' + pid + '\',' + j.id + ')"' +
+    ' ondragleave="onJobDragLeave(event)"' +
+    ' ondrop="onJobDrop(event,\'' + pid + '\')"' +
+    ' ondragend="onJobDragEnd(event,\'' + pid + '\')">' +
+    '<span class="job-drag-handle" onmousedown="jobDragHandleDown()">' +
+      '<svg width="8" height="12" viewBox="0 0 8 12" fill="currentColor">' +
+        '<circle cx="2" cy="2" r="1.1"/><circle cx="6" cy="2" r="1.1"/>' +
+        '<circle cx="2" cy="6" r="1.1"/><circle cx="6" cy="6" r="1.1"/>' +
+        '<circle cx="2" cy="10" r="1.1"/><circle cx="6" cy="10" r="1.1"/>' +
+      '</svg>' +
+    '</span>' +
     '<input type="checkbox" class="job-cb"' + (j.done ? ' checked' : '') +
       ' onchange="toggleJob(\'' + pid + '\',' + j.id + ')">' +
     '<textarea class="job-inp" rows="1" placeholder="Enter task..."' +
