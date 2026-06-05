@@ -323,13 +323,14 @@ textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-heigh
   display: flex; align-items: baseline; gap: 3px; flex-wrap: wrap; min-width: 0; margin-bottom: 1px;
 }
 .pt-hdr-meta {
-  display: flex; align-items: center; gap: 3px; margin-top: 4px; flex-wrap: wrap; min-width: 0;
+  display: flex; align-items: baseline; gap: 4px; margin-top: 4px; min-width: 0; overflow: hidden;
 }
 .hdr-meta-lbl {
   font-size: 13px; color: var(--muted); flex-shrink: 0;
   font-family: 'SF Mono','Consolas','Menlo',monospace;
 }
 .hdr-meta-sep { font-size: 13px; color: var(--muted); flex-shrink: 0; }
+.hdr-loc-gap  { width: 8px; flex-shrink: 0; }
 .hdr-demog-sep { font-size: 12px; color: var(--border); flex-shrink: 0; margin: 0 2px; font-weight: 300; }
 
 .hdr-inp {
@@ -361,6 +362,7 @@ textarea.job-inp { resize: none; overflow: hidden; min-height: 1.6em; line-heigh
   transition: border-color 0.15s, background 0.15s;
   border-radius: 3px 3px 0 0;
   -webkit-appearance: none; appearance: none;
+  vertical-align: baseline;
 }
 .hdr-sel:hover  { background: rgba(0,0,0,0.04); border-bottom-color: rgba(0,0,0,0.18); }
 .hdr-sel:focus  { background: rgba(42,92,138,0.06); border-bottom-color: var(--pri); color: var(--text); }
@@ -1709,8 +1711,8 @@ function cardHTML(p) {
           '<input class="hdr-inp hdr-name-inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
             ' oninput="setField(\'' + pid + '\',\'lastName\',this.value)">' +
           '<span class="hdr-demog-sep">|</span>' +
-          '<input class="hdr-inp hdr-age-inp" type="number" min="0" max="150" value="' + h(p.age) + '" placeholder="Age"' +
-            ' oninput="setField(\'' + pid + '\',\'age\',this.value)">' +
+          '<input class="hdr-inp hdr-age-inp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="' + h(p.age) + '" placeholder="Age"' +
+            ' oninput="this.value=this.value.replace(/[^0-9]/g,\'\');setField(\'' + pid + '\',\'age\',this.value)">' +
           '<select class="hdr-sel hdr-gender-sel sync-gender" onchange="setGenderDd(\'' + pid + '\',this.value)">' +
             '<option value="">—</option>' +
             '<option value="M"' + (p.gender === 'M' ? ' selected' : '') + '>M</option>' +
@@ -1723,10 +1725,11 @@ function cardHTML(p) {
           '<span class="hdr-meta-lbl">NHI</span>' +
           '<input class="hdr-inp hdr-nhi-inp" type="text" value="' + h(p.nhi) + '" placeholder="—" maxlength="8"' +
             ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value)">' +
-          '<select class="hdr-sel hdr-ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value)" style="margin-left:4px">' +
+          '<span class="hdr-loc-gap"></span>' +
+          '<select class="hdr-sel hdr-ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value)">' +
             WARDS.map(w => '<option value="' + w + '"' + (p.ward === w ? ' selected' : '') + '>' + w + '</option>').join('') +
           '</select>' +
-          '<span class="hdr-meta-sep">Bed</span>' +
+          '<span class="hdr-meta-lbl">Bed</span>' +
           '<input class="hdr-inp hdr-bed-inp" type="text" value="' + h(p.bed) + '" placeholder="—"' +
             ' oninput="setField(\'' + pid + '\',\'bed\',this.value)">' +
         '</div>' +
