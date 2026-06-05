@@ -722,29 +722,19 @@ body.view-mode .btn-clear-all { display: none !important; }
 /* ---- LAST UPDATED ---- */
 .bar-updated { font-size: 10px; opacity: 0.52; white-space: nowrap; margin-top: 1px; }
 
-/* ---- DARK MODE TOGGLE (iOS-style pill) ---- */
-.dark-toggle {
-  position: relative; width: 44px; height: 26px;
-  background: rgba(255,255,255,0.18);
-  border: 1.5px solid rgba(255,255,255,0.3);
-  border-radius: 13px; cursor: pointer; padding: 0; flex-shrink: 0;
-  transition: background 0.25s, border-color 0.25s;
+/* ---- DARK MODE BUTTON (half-circle icon) ---- */
+.btn-halfcircle {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,0.9); color: var(--pri);
+  border: none; cursor: pointer; padding: 0; flex-shrink: 0;
+  transition: background 0.15s;
 }
-.dark-toggle::after {
-  content: ''; position: absolute;
-  top: 3px; left: 3px;
-  width: 18px; height: 18px;
-  background: rgba(255,255,255,0.92);
-  border-radius: 50%;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+.btn-halfcircle:hover { background: #fff; }
+body.dark-mode .btn-halfcircle {
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.88);
 }
-body.dark-mode .dark-toggle {
-  background: #3b82f6; border-color: #2563eb;
-}
-body.dark-mode .dark-toggle::after {
-  transform: translateX(18px);
-}
+body.dark-mode .btn-halfcircle:hover { background: rgba(255,255,255,0.2); }
 
 /* ---- DARK MODE ---- */
 body.dark-mode {
@@ -801,7 +791,12 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
   </div>
   <div id="teamTabs" class="team-tabs"></div>
   <div class="bar-right">
-    <button class="dark-toggle" id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle dark/light mode" aria-label="Toggle dark mode"></button>
+    <button class="btn-halfcircle" id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle dark/light mode" aria-label="Toggle dark mode">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M12 2A10 10 0 0 0 12 22Z" fill="currentColor"/>
+      </svg>
+    </button>
     <button class="btn-clear-all" onclick="openClearModal()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14H6L5,6"/>
