@@ -741,7 +741,7 @@ body.view-mode .edit-only-item { display: none !important; }
   background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.82);
   border: 1px solid rgba(255,255,255,0.22);
   cursor: pointer; flex-shrink: 0; transition: background 0.15s, opacity 0.15s;
-  font-size: 15px; line-height: 1; font-family: inherit;
+  font-size: 17px; line-height: 1; font-family: inherit;
 }
 .btn-undoredo:hover:not(:disabled) { background: rgba(255,255,255,0.22); color: #fff; }
 .btn-undoredo:disabled { opacity: 0.28; cursor: not-allowed; }
@@ -859,8 +859,8 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
       </svg>
     </button>
     <input type="file" id="importFileInput" accept=".csv,text/csv" style="display:none" onchange="handleImportFile(this)">
-    <button class="btn-undoredo" id="undoBtn" onclick="performUndo()" title="Undo (⌘Z)" disabled>↩</button>
-    <button class="btn-undoredo" id="redoBtn" onclick="performRedo()" title="Redo (⌘⇧Z)" disabled>↪</button>
+    <button class="btn-undoredo" id="undoBtn" onclick="performUndo()" title="Undo (⌘Z)" disabled>↺</button>
+    <button class="btn-undoredo" id="redoBtn" onclick="performRedo()" title="Redo (⌘⇧Z)" disabled>↻</button>
     <button class="btn-add-pt" onclick="addPatient()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add Patient
