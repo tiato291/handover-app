@@ -409,7 +409,7 @@ body.view-mode .btn-addjob,
 body.view-mode .presets,
 body.view-mode .job-del,
 body.view-mode .btn-add-pt,
-body.view-mode .btn-clear-all { display: none !important; }
+body.view-mode .edit-only-item { display: none !important; }
 
 /* ---- CLEAR ALL BUTTON ---- */
 .btn-clear-all {
@@ -736,6 +736,44 @@ body.dark-mode .btn-halfcircle {
 }
 body.dark-mode .btn-halfcircle:hover { background: rgba(255,255,255,0.2); }
 
+/* ---- HEADER OVERFLOW MENU ---- */
+.hdr-menu-wrap { position: relative; flex-shrink: 0; }
+.btn-hdr-menu {
+  display: flex; align-items: center; justify-content: center;
+  height: 30px; padding: 0 10px; border-radius: 6px;
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.82);
+  border: 1px solid rgba(255,255,255,0.22);
+  cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500;
+  gap: 5px; white-space: nowrap; transition: background 0.15s;
+}
+.btn-hdr-menu:hover { background: rgba(255,255,255,0.22); color: #fff; }
+.hdr-dropdown {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.13), 0 2px 6px rgba(0,0,0,0.06);
+  min-width: 210px; z-index: 300; overflow: hidden; padding: 5px 0;
+}
+.hdr-menu-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 9px 16px;
+  background: none; border: none; font-family: inherit;
+  font-size: 13px; color: var(--text); cursor: pointer; text-align: left;
+  transition: background 0.1s; white-space: nowrap;
+}
+.hdr-menu-item:hover { background: var(--pri-lite); color: var(--pri); }
+.hdr-menu-item svg { flex-shrink: 0; opacity: 0.65; }
+.hdr-menu-item:hover svg { opacity: 1; }
+.hdr-menu-item.danger { color: #c0392b; }
+.hdr-menu-item.danger svg { opacity: 0.75; }
+.hdr-menu-item.danger:hover { background: var(--unst-bg); color: #c0392b; }
+.hdr-menu-div { border-top: 1px solid var(--border); margin: 4px 0; }
+
+body.dark-mode .hdr-dropdown { background: #1f2937; border-color: var(--border); box-shadow: 0 8px 28px rgba(0,0,0,0.45); }
+body.dark-mode .hdr-menu-item { color: var(--text); }
+body.dark-mode .hdr-menu-item:hover { background: var(--pri-lite); }
+body.dark-mode .hdr-menu-div { border-color: var(--border); }
+
 /* ---- DARK MODE ---- */
 body.dark-mode {
   --bg: #111827; --card: #1f2937;
@@ -797,36 +835,58 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
         <path d="M12 2A10 10 0 0 0 12 22Z" fill="currentColor"/>
       </svg>
     </button>
-    <button class="btn-clear-all" onclick="openClearModal()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14H6L5,6"/>
-        <path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4h6v2"/>
-      </svg>
-      Clear All
-    </button>
-    <button class="btn-signout" id="signOutBtn" onclick="doSignOut()" style="display:none">Sign Out</button>
-    <button class="btn-mode" id="modeBtn" onclick="toggleMode()">Edit Mode</button>
-    <button class="btn-print" onclick="doPrint()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="6,9 6,2 18,2 18,9"/>
-        <path d="M6,18H4a2,2,0,0,1-2-2v-5a2,2,0,0,1,2-2h16a2,2,0,0,1,2,2v5a2,2,0,0,1-2,2H18"/>
-        <rect x="6" y="14" width="12" height="8"/>
-      </svg>
-      Print
-    </button>
     <input type="file" id="importFileInput" accept=".csv,text/csv" style="display:none" onchange="handleImportFile(this)">
-    <button class="btn-import" onclick="triggerImport()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-        <polyline points="17 8 12 3 7 8"/>
-        <line x1="12" y1="3" x2="12" y2="15"/>
-      </svg>
-      Import CSV
-    </button>
     <button class="btn-add-pt" onclick="addPatient()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add Patient
     </button>
+    <div class="hdr-menu-wrap" id="hdrMenuWrap">
+      <button class="btn-hdr-menu" onclick="toggleHeaderMenu(event)" title="Menu">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+        </svg>
+        Menu
+      </button>
+      <div class="hdr-dropdown" id="hdrDropdown" style="display:none">
+        <button class="hdr-menu-item" onclick="toggleMode();closeHeaderMenu()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+          </svg>
+          <span id="hdrModeLabel">Switch to View Mode</span>
+        </button>
+        <div class="hdr-menu-div"></div>
+        <button class="hdr-menu-item" onclick="doPrint();closeHeaderMenu()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6,9 6,2 18,2 18,9"/>
+            <path d="M6,18H4a2,2,0,0,1-2-2v-5a2,2,0,0,1,2-2h16a2,2,0,0,1,2,2v5a2,2,0,0,1-2,2H18"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Print
+        </button>
+        <button class="hdr-menu-item edit-only-item" onclick="triggerImport();closeHeaderMenu()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Import CSV
+        </button>
+        <button class="hdr-menu-item danger edit-only-item" onclick="openClearModal();closeHeaderMenu()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14H6L5,6"/>
+            <path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4h6v2"/>
+          </svg>
+          Clear All Patients
+        </button>
+        <div class="hdr-menu-div" id="hdrSignOutDiv" style="display:none"></div>
+        <button class="hdr-menu-item" id="hdrSignOutItem" onclick="doSignOut()" style="display:none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Sign Out
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -1120,8 +1180,10 @@ async function loadFromServer() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
 
-    const signOutBtn = document.getElementById('signOutBtn');
-    if (signOutBtn) signOutBtn.style.display = '';
+    const so = document.getElementById('hdrSignOutItem');
+    const soDiv = document.getElementById('hdrSignOutDiv');
+    if (so) so.style.display = '';
+    if (soDiv) soDiv.style.display = '';
 
     let loadedTeams = data.teams || [];
     if (!loadedTeams.length) loadedTeams = defaultTeams();
@@ -1453,14 +1515,13 @@ function setSort(s) { currentSort = s; render(); }
 
 function toggleMode() {
   editMode = !editMode;
-  const btn = document.getElementById('modeBtn');
   if (editMode) {
     document.body.classList.remove('view-mode');
-    if (btn) { btn.textContent = 'Edit Mode'; btn.classList.remove('in-view'); }
   } else {
     document.body.classList.add('view-mode');
-    if (btn) { btn.textContent = 'View Mode'; btn.classList.add('in-view'); }
   }
+  const lbl = document.getElementById('hdrModeLabel');
+  if (lbl) lbl.textContent = editMode ? 'Switch to View Mode' : 'Switch to Edit Mode';
 }
 
 function getSorted(list) {
@@ -2137,6 +2198,18 @@ function updateJobsCounter(pid) {
   el.className   = 'jobs-count' + (total > 0 && done === total ? ' all-done' : '');
 }
 
+function toggleHeaderMenu(event) {
+  event.stopPropagation();
+  const dd = document.getElementById('hdrDropdown');
+  if (!dd) return;
+  dd.style.display = dd.style.display === 'none' ? '' : 'none';
+}
+
+function closeHeaderMenu() {
+  const dd = document.getElementById('hdrDropdown');
+  if (dd) dd.style.display = 'none';
+}
+
 function setSearch(val) {
   searchQuery = val.toLowerCase().trim();
   render();
@@ -2181,7 +2254,11 @@ async function doSignOut() {
   // Fire-and-forget orphan cleanup after initial load
   fetch('/api/cleanup', { method: 'POST' }).catch(() => {});
 
-  document.addEventListener('click', closePtMenu);
+  document.addEventListener('click', e => {
+    closePtMenu();
+    const wrap = document.getElementById('hdrMenuWrap');
+    if (wrap && !wrap.contains(e.target)) closeHeaderMenu();
+  });
 
   window.addEventListener('keydown', e => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
