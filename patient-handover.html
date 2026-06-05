@@ -699,27 +699,15 @@ body.view-mode .btn-clear-all { display: none !important; }
   .loc-sep { font-size: 7pt !important; padding-bottom: 1pt; }
 }
 
-/* ---- JOBS COUNTER IN HEADER ---- */
-.pt-hdr-jobs { font-size: 11px; font-weight: 500; color: var(--muted); margin-top: 3px; }
-.pt-hdr-jobs:empty { display: none; }
-.pt-hdr-jobs.all-done { color: var(--cov-nojobs); font-weight: 600; }
+/* ---- JOBS COUNTER (body heading) ---- */
+.jobs-count { font-size: 10px; font-weight: 500; color: var(--muted); }
+.jobs-count.all-done { color: var(--cov-nojobs); font-weight: 600; }
 
 /* ---- JOB TIMESTAMP ---- */
 .job-time {
   font-size: 11px; color: var(--muted); white-space: nowrap; flex-shrink: 0;
   font-family: 'SF Mono','Consolas','Menlo',monospace; margin-left: 2px;
 }
-
-/* ---- CARD COLLAPSE ---- */
-.btn-collapse-card {
-  background: none; border: none; cursor: pointer;
-  color: var(--muted); font-size: 13px; padding: 0 4px 0 0;
-  line-height: 1; transition: transform 0.2s, color 0.15s;
-  flex-shrink: 0; opacity: 0.55;
-}
-.btn-collapse-card:hover { opacity: 1; color: var(--text); }
-.card.collapsed .btn-collapse-card { transform: rotate(-90deg); }
-.card.collapsed .card-body { display: none; }
 
 /* ---- SEARCH BAR ---- */
 .search-inp {
@@ -734,13 +722,29 @@ body.view-mode .btn-clear-all { display: none !important; }
 /* ---- LAST UPDATED ---- */
 .bar-updated { font-size: 10px; opacity: 0.52; white-space: nowrap; margin-top: 1px; }
 
-/* ---- DARK MODE BUTTON ---- */
-.btn-darkmode {
-  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22);
-  border-radius: 6px; padding: 6px 9px; cursor: pointer; font-size: 15px;
-  line-height: 1; transition: background 0.15s; color: inherit;
+/* ---- DARK MODE TOGGLE (iOS-style pill) ---- */
+.dark-toggle {
+  position: relative; width: 44px; height: 26px;
+  background: rgba(255,255,255,0.18);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: 13px; cursor: pointer; padding: 0; flex-shrink: 0;
+  transition: background 0.25s, border-color 0.25s;
 }
-.btn-darkmode:hover { background: rgba(255,255,255,0.22); }
+.dark-toggle::after {
+  content: ''; position: absolute;
+  top: 3px; left: 3px;
+  width: 18px; height: 18px;
+  background: rgba(255,255,255,0.92);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+body.dark-mode .dark-toggle {
+  background: #3b82f6; border-color: #2563eb;
+}
+body.dark-mode .dark-toggle::after {
+  transform: translateX(18px);
+}
 
 /* ---- DARK MODE ---- */
 body.dark-mode {
@@ -797,7 +801,7 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
   </div>
   <div id="teamTabs" class="team-tabs"></div>
   <div class="bar-right">
-    <button class="btn-darkmode" id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
+    <button class="dark-toggle" id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle dark/light mode" aria-label="Toggle dark mode"></button>
     <button class="btn-clear-all" onclick="openClearModal()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14H6L5,6"/>
@@ -1824,7 +1828,6 @@ function cardHTML(p) {
       '<div class="card-top-left">' +
         /* ── Row 1: Names + Age + Gender ── */
         '<div class="pt-hdr-main">' +
-          '<button class="btn-collapse-card no-print" onclick="collapseCard(\'' + pid + '\')" title="Collapse/expand">&#9660;</button>' +
           '<input class="hdr-inp hdr-name-inp f-fn" type="text" value="' + h(p.firstName) + '" placeholder="First name"' +
             ' oninput="setField(\'' + pid + '\',\'firstName\',this.value)">' +
           '<input class="hdr-inp hdr-name-inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
@@ -1858,9 +1861,6 @@ function cardHTML(p) {
           '</span>' +
         '</div>' +
         '<div class="pt-sgoc-note">' + h(p.sgocNote || '') + '</div>' +
-        '<div class="pt-hdr-jobs' + (p.jobs.length > 0 && p.jobs.filter(j=>j.done).length === p.jobs.length ? ' all-done' : '') + '" id="jc-' + pid + '">' +
-          (p.jobs.length > 0 ? p.jobs.filter(j=>j.done).length + '/' + p.jobs.length + ' done' : '') +
-        '</div>' +
       '</div>' +
       '<div class="card-badges">' +
         '<select class="hdr-sgoc-sel' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : ' sgoc-none') + '" onchange="setSgocDd(\'' + pid + '\',this.value)">' +
@@ -1899,7 +1899,12 @@ function cardHTML(p) {
       '<hr class="hdiv">' +
       '<div>' +
         '<div class="jobs-hdr">' +
-          '<span class="jobs-lbl">Jobs List</span>' +
+          '<div style="display:flex;align-items:center;gap:6px">' +
+            '<span class="jobs-lbl">Jobs List</span>' +
+            '<span class="' + ('jobs-count' + (p.jobs.length > 0 && p.jobs.filter(j=>j.done).length === p.jobs.length ? ' all-done' : '')) + '" id="jc-' + pid + '">' +
+              (p.jobs.length > 0 ? '— ' + p.jobs.filter(j=>j.done).length + '/' + p.jobs.length + ' done' : '') +
+            '</span>' +
+          '</div>' +
           '<button class="btn-addjob" onclick="addJob(\'' + pid + '\')">' +
             '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">' +
             '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
@@ -2133,13 +2138,8 @@ function updateJobsCounter(pid) {
   if (!p) return;
   const total = p.jobs.length;
   const done  = p.jobs.filter(j => j.done).length;
-  el.textContent = total > 0 ? done + '/' + total + ' done' : '';
-  el.className   = 'pt-hdr-jobs' + (total > 0 && done === total ? ' all-done' : '');
-}
-
-function collapseCard(pid) {
-  const card = qpid(pid);
-  if (card) card.classList.toggle('collapsed');
+  el.textContent = total > 0 ? '— ' + done + '/' + total + ' done' : '';
+  el.className   = 'jobs-count' + (total > 0 && done === total ? ' all-done' : '');
 }
 
 function setSearch(val) {
@@ -2157,8 +2157,6 @@ function updateLastUpdatedText() {
 function toggleDarkMode() {
   const isDark = document.body.classList.toggle('dark-mode');
   localStorage.setItem('gm_dark', isDark ? '1' : '0');
-  const btn = document.getElementById('darkModeBtn');
-  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
 }
 
 /* ---- SIGN OUT ---- */
@@ -2176,8 +2174,6 @@ async function doSignOut() {
   // Dark mode
   if (localStorage.getItem('gm_dark') === '1') {
     document.body.classList.add('dark-mode');
-    const btn = document.getElementById('darkModeBtn');
-    if (btn) btn.textContent = '☀️';
   }
 
   await loadFromServer();
