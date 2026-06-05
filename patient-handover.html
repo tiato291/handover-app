@@ -333,19 +333,18 @@ body.view-mode .job-drag-handle { display: none !important; }
 /* ---- CARD HEADER INLINE INPUTS ---- */
 .card-top-left { flex: 1; min-width: 0; }
 
-.pt-hdr-main {
-  display: flex; align-items: baseline; gap: 3px; flex-wrap: wrap; min-width: 0; margin-bottom: 1px;
+.pt-hdr-grid {
+  display: grid; grid-template-columns: auto 1fr;
+  row-gap: 4px; column-gap: 8px; min-width: 0; align-items: baseline;
 }
-.pt-hdr-meta {
-  display: flex; align-items: baseline; gap: 4px; margin-top: 4px; min-width: 0; overflow: hidden;
-}
+.hdr-row1-rest { display: flex; align-items: baseline; gap: 3px; flex-wrap: wrap; min-width: 0; }
+.hdr-nhi-cell  { display: flex; align-items: baseline; gap: 4px; }
 .hdr-meta-lbl {
   font-size: 13px; color: var(--muted); flex-shrink: 0;
   font-family: 'SF Mono','Consolas','Menlo',monospace;
 }
 .hdr-meta-sep { font-size: 13px; color: var(--muted); flex-shrink: 0; }
-.hdr-loc-gap  { width: 20px; flex-shrink: 0; }
-.hdr-loc-group { display: inline-flex; align-items: baseline; gap: 2px; flex-shrink: 0; }
+.hdr-loc-group { display: flex; align-items: baseline; gap: 4px; flex-shrink: 0; }
 .hdr-gender-other { max-width: 10ch; font-size: 13px; }
 .hdr-demog-sep { font-size: 12px; color: var(--border); flex-shrink: 0; margin: 0 2px; font-weight: 300; }
 
@@ -652,8 +651,7 @@ body.view-mode .edit-only-item { display: none !important; }
   .hdr-nhi-inp, .hdr-ward-sel, .hdr-bed-inp { font-size: 7pt !important; }
   .hdr-meta-lbl { font-size: 6pt !important; }
   .hdr-meta-sep, .hdr-demog-sep { font-size: 7pt !important; }
-  .pt-hdr-main { margin-bottom: 0; }
-  .pt-hdr-meta { margin-top: 1pt; }
+  .pt-hdr-grid { row-gap: 1pt !important; }
   .hdr-sgoc-sel, .hdr-cov-sel {
     padding: 1.5pt 6pt !important; font-size: 7pt !important; border-radius: 10pt !important;
     print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important;
@@ -2107,39 +2105,38 @@ function cardHTML(p) {
     '<div class="card" data-pid="' + pid + '">' +
     '<div class="card-top' + (p.sgoc ? ' sgoc-' + p.sgoc.toLowerCase() : '') + '">' +
       '<div class="card-top-left">' +
-        /* ── Row 1: Names + Age + Gender ── */
-        '<div class="pt-hdr-main">' +
+        '<div class="pt-hdr-grid">' +
           '<input class="hdr-inp hdr-name-inp f-fn" type="text" value="' + h(p.firstName) + '" placeholder="First name"' +
             ' oninput="setField(\'' + pid + '\',\'firstName\',this.value)">' +
-          '<input class="hdr-inp hdr-name-inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
-            ' oninput="setField(\'' + pid + '\',\'lastName\',this.value)">' +
-          '<span class="hdr-demog-sep">|</span>' +
-          '<input class="hdr-inp hdr-age-inp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="' + h(p.age) + '" placeholder="Age"' +
-            ' oninput="this.value=this.value.replace(/[^0-9]/g,\'\');setField(\'' + pid + '\',\'age\',this.value)">' +
-          '<select class="hdr-sel hdr-gender-sel sync-gender" onchange="setGenderDd(\'' + pid + '\',this.value)">' +
-            '<option value="">Gender</option>' +
-            '<option value="M"' + (p.gender === 'M' ? ' selected' : '') + '>Male</option>' +
-            '<option value="F"' + (p.gender === 'F' ? ' selected' : '') + '>Female</option>' +
-            '<option value="Other"' + (p.gender === 'Other' ? ' selected' : '') + '>Other</option>' +
-          '</select>' +
-          '<input class="hdr-inp hdr-gender-other" type="text" placeholder="specify..." value="' + h(p.genderOther || '') + '"' +
-            ' style="display:' + (p.gender === 'Other' ? '' : 'none') + '"' +
-            ' oninput="setField(\'' + pid + '\',\'genderOther\',this.value)">' +
-        '</div>' +
-        /* ── Row 2: NHI + Location ── */
-        '<div class="pt-hdr-meta">' +
-          '<span class="hdr-meta-lbl">NHI</span>' +
-          '<input class="hdr-inp hdr-nhi-inp" type="text" value="' + h(p.nhi) + '" placeholder="—" maxlength="8"' +
-            ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value)">' +
-          '<span class="hdr-loc-gap"></span>' +
-          '<span class="hdr-loc-group">' +
+          '<div class="hdr-row1-rest">' +
+            '<input class="hdr-inp hdr-name-inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
+              ' oninput="setField(\'' + pid + '\',\'lastName\',this.value)">' +
+            '<span class="hdr-demog-sep">|</span>' +
+            '<input class="hdr-inp hdr-age-inp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="' + h(p.age) + '" placeholder="Age"' +
+              ' oninput="this.value=this.value.replace(/[^0-9]/g,\'\');setField(\'' + pid + '\',\'age\',this.value)">' +
+            '<select class="hdr-sel hdr-gender-sel sync-gender" onchange="setGenderDd(\'' + pid + '\',this.value)">' +
+              '<option value="">Gender</option>' +
+              '<option value="M"' + (p.gender === 'M' ? ' selected' : '') + '>Male</option>' +
+              '<option value="F"' + (p.gender === 'F' ? ' selected' : '') + '>Female</option>' +
+              '<option value="Other"' + (p.gender === 'Other' ? ' selected' : '') + '>Other</option>' +
+            '</select>' +
+            '<input class="hdr-inp hdr-gender-other" type="text" placeholder="specify..." value="' + h(p.genderOther || '') + '"' +
+              ' style="display:' + (p.gender === 'Other' ? '' : 'none') + '"' +
+              ' oninput="setField(\'' + pid + '\',\'genderOther\',this.value)">' +
+          '</div>' +
+          '<div class="hdr-nhi-cell">' +
+            '<span class="hdr-meta-lbl">NHI</span>' +
+            '<input class="hdr-inp hdr-nhi-inp" type="text" value="' + h(p.nhi) + '" placeholder="—" maxlength="8"' +
+              ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value)">' +
+          '</div>' +
+          '<div class="hdr-loc-group">' +
             '<select class="hdr-sel hdr-ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value)">' +
               WARDS.map(w => '<option value="' + w + '"' + (p.ward === w ? ' selected' : '') + '>' + w + '</option>').join('') +
             '</select>' +
             '<span class="hdr-meta-lbl">Bed</span>' +
             '<input class="hdr-inp hdr-bed-inp" type="text" value="' + h(p.bed) + '" placeholder="—"' +
               ' oninput="setField(\'' + pid + '\',\'bed\',this.value)">' +
-          '</span>' +
+          '</div>' +
         '</div>' +
         '<div class="pt-sgoc-note">' + h(p.sgocNote || '') + '</div>' +
       '</div>' +
