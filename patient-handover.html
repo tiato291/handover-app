@@ -744,6 +744,34 @@ body.view-mode .edit-only-item { display: none !important; }
 .btn-undoredo:hover:not(:disabled) { background: rgba(255,255,255,0.22); color: #fff; }
 .btn-undoredo:disabled { opacity: 0.28; cursor: not-allowed; }
 
+/* ---- DUPLICATE WARNING BADGE ---- */
+.btn-dup-warn {
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(251,191,36,0.18); color: #fbbf24;
+  border: 1px solid rgba(251,191,36,0.4);
+  border-radius: 6px; padding: 0 10px; height: 30px;
+  font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: background 0.15s; flex-shrink: 0;
+}
+.btn-dup-warn:hover { background: rgba(251,191,36,0.3); color: #fde68a; }
+.dup-modal-list {
+  max-height: 220px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: var(--bg); padding: 4px 10px; margin: 8px 0 0;
+}
+.dup-modal-item {
+  padding: 7px 2px; font-size: 13px; color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.dup-modal-item:last-child { border-bottom: none; }
+.dup-modal-reason { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 600; }
+.import-dup-note {
+  font-size: 12px; color: #92400e; background: #fffbeb;
+  border: 1px solid #fcd34d; border-radius: 6px;
+  padding: 8px 12px; margin-top: 8px;
+}
+body.dark-mode .import-dup-note { color: #fbbf24; background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.3); }
+
 /* ---- DARK MODE BUTTON (half-circle icon) ---- */
 .btn-halfcircle {
   display: flex; align-items: center; justify-content: center;
@@ -859,6 +887,10 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
     <input type="file" id="importFileInput" accept=".csv,text/csv" style="display:none" onchange="handleImportFile(this)">
     <button class="btn-undoredo" id="undoBtn" onclick="performUndo()" title="Undo (⌘Z)" disabled>↺</button>
     <button class="btn-undoredo" id="redoBtn" onclick="performRedo()" title="Redo (⌘⇧Z)" disabled>↻</button>
+    <button class="btn-dup-warn" id="dupWarnBtn" onclick="openDupModal()" title="Duplicate patients detected" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span id="dupWarnCount"></span>
+    </button>
     <button class="btn-add-pt" onclick="addPatient()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add Patient
@@ -976,6 +1008,7 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
     <div class="modal-title" id="importModalTitle">Import from CSV</div>
     <div class="import-stats" id="importStats"></div>
     <div class="import-preview-list" id="importPreviewList"></div>
+    <div id="importDupNote"></div>
     <div class="import-action-question">What would you like to do?</div>
     <div class="import-action-btns">
       <button class="import-btn-add" id="importAddBtn" onclick="doImport(false)"></button>
@@ -1055,6 +1088,24 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
     <div class="modal-btns">
       <button class="modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
       <button class="modal-btn-confirm" onclick="confirmDeletePatient()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Duplicate Warning Modal -->
+<div class="modal-overlay" id="dupModal" onclick="handleDupOverlay(event)">
+  <div class="modal-box" role="dialog" aria-modal="true">
+    <div class="modal-icon" style="background:#fffbeb;border-color:#fcd34d">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </div>
+    <div class="modal-title">Duplicate Patients Detected</div>
+    <div class="modal-warn" id="dupModalDesc" style="margin-bottom:0;text-align:left"></div>
+    <div class="dup-modal-list" id="dupModalList"></div>
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" style="width:100%" onclick="closeDupModal()">Dismiss</button>
     </div>
   </div>
 </div>
@@ -1316,6 +1367,7 @@ async function doAutoRefresh() {
     updateLastUpdatedText();
     renderTeamTabs();
     render();
+    checkDuplicates();
   } catch(e) { /* network blip */ }
 }
 
@@ -1408,6 +1460,7 @@ function switchTeam(tid) {
     b.className = 'filter-btn' + (b.dataset.filter === 'All' ? ' active' : '');
   });
   render();
+  checkDuplicates();
 }
 
 /* ---- FILTER / SORT ---- */
@@ -1467,10 +1520,11 @@ function addPatient() {
     firstName:'', lastName:'', age:'', gender:'', genderOther:'', nhi:'', ward:'Medical', bed:'',
     diagnosis:'', sgoc:'', sgocNote:'', assessment:'', background:'', coverage:'No Jobs', jobs:[]
   };
-  patients.push(p);
+  patients.unshift(p);
   pushUndo({ type: 'add', pid: p.pid, teamId: currentTeam, desc: 'added patient' });
   savePatient(p.pid);
   render();
+  checkDuplicates();
   setTimeout(() => {
     const card = qpid(p.pid);
     if (card) { const f = card.querySelector('.f-fn'); if (f) f.focus(); }
@@ -1824,6 +1878,7 @@ function confirmDeletePatient() {
   if (teamId === currentTeam) patients = allPatients[currentTeam];
   deletePatientFromServer(pid, teamId);
   render(); closeDeleteModal();
+  checkDuplicates();
 }
 
 /* ---- UNDO ---- */
@@ -1955,7 +2010,7 @@ async function performRedo() {
       const { patient, teamId } = action;
       undoStack.push({ type: 'add', pid: patient.pid, teamId, desc: action.desc });
       if (!allPatients[teamId]) allPatients[teamId] = [];
-      allPatients[teamId].push(patient);
+      allPatients[teamId].unshift(patient);
       if (teamId === currentTeam) patients = allPatients[currentTeam];
       savePatient(patient.pid);
       render();
@@ -2136,10 +2191,10 @@ function cardHTML(p) {
       '<div class="card-top-left">' +
         '<div class="pt-hdr-grid">' +
           '<input class="hdr-inp hdr-name-inp f-fn" type="text" value="' + h(p.firstName) + '" placeholder="First name"' +
-            ' oninput="setField(\'' + pid + '\',\'firstName\',this.value)">' +
+            ' oninput="setField(\'' + pid + '\',\'firstName\',this.value)" onblur="checkDuplicates()">' +
           '<div class="hdr-row1-rest">' +
             '<input class="hdr-inp hdr-name-inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
-              ' oninput="setField(\'' + pid + '\',\'lastName\',this.value)">' +
+              ' oninput="setField(\'' + pid + '\',\'lastName\',this.value)" onblur="checkDuplicates()">' +
             '<span class="hdr-demog-sep">|</span>' +
             '<input class="hdr-inp hdr-age-inp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="' + h(p.age) + '" placeholder="Age"' +
               ' oninput="this.value=this.value.replace(/[^0-9]/g,\'\');setField(\'' + pid + '\',\'age\',this.value)">' +
@@ -2156,7 +2211,8 @@ function cardHTML(p) {
           '<div class="hdr-nhi-cell">' +
             '<span class="hdr-meta-lbl">NHI</span>' +
             '<input class="hdr-inp hdr-nhi-inp" type="text" value="' + h(p.nhi) + '" placeholder="—" maxlength="8"' +
-              ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value)">' +
+              ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value)"' +
+              ' onblur="checkDuplicates()">' +
           '</div>' +
           '<div class="hdr-loc-group">' +
             '<select class="hdr-sel hdr-ward-sel" onchange="setField(\'' + pid + '\',\'ward\',this.value)">' +
@@ -2354,6 +2410,12 @@ function showImportPreview() {
     'Add to existing' + (existing ? ' (' + existing + ' patient' + (existing !== 1 ? 's' : '') + ')' : '');
   document.getElementById('importReplaceBtn').textContent =
     existing ? 'Replace all ' + existing + ' patient' + (existing !== 1 ? 's' : '') : 'Import as new list';
+  const _xNHIs = new Set(patients.filter(p => p.nhi).map(p => p.nhi.trim().toUpperCase()));
+  const _dupCnt = _pendingImport.filter(p => p.nhi && _xNHIs.has(p.nhi.trim().toUpperCase())).length;
+  const _dupNoteEl = document.getElementById('importDupNote');
+  if (_dupNoteEl) _dupNoteEl.innerHTML = _dupCnt > 0
+    ? '<div class="import-dup-note">⚠ ' + _dupCnt + ' patient' + (_dupCnt !== 1 ? 's' : '') + ' will be skipped when adding to existing (duplicate NHI)</div>'
+    : '';
   document.getElementById('importModal').classList.add('open');
 }
 
@@ -2367,19 +2429,29 @@ function handleImportOverlayClick(e) {
 }
 
 function doImport(replace) {
+  let skipped = [];
   if (replace) {
     const saved = deepClone(patients);
     pushUndo({ type: 'clear_all', patients: saved, teamId: currentTeam, desc: 'replaced all patients' });
     (allPatients[currentTeam] || []).forEach(p => deletePatientFromServer(p.pid, currentTeam));
     allPatients[currentTeam] = [];
     patients = allPatients[currentTeam];
+  } else {
+    const existingNHIs = new Set(patients.filter(p => p.nhi).map(p => p.nhi.trim().toUpperCase()));
+    skipped = _pendingImport.filter(p => p.nhi && existingNHIs.has(p.nhi.trim().toUpperCase()));
+    if (skipped.length > 0) {
+      _pendingImport = _pendingImport.filter(p => !p.nhi || !existingNHIs.has(p.nhi.trim().toUpperCase()));
+    }
   }
-  _pendingImport.forEach(p => {
-    p.pid = newPid(); p.teamId = currentTeam;
-    patients.push(p);
-    savePatient(p.pid);
-  });
+  const imported = _pendingImport.map(p => { p.pid = newPid(); p.teamId = currentTeam; return p; });
+  imported.forEach(p => savePatient(p.pid));
+  patients.unshift(...imported);
   render(); closeImportModal();
+  checkDuplicates();
+  if (skipped.length > 0) {
+    const names = skipped.map(p => [p.firstName, p.lastName].filter(Boolean).join(' ') || p.nhi).join(', ');
+    showToast(skipped.length + ' skipped (duplicate NHI): ' + trunc(names, 50));
+  }
 }
 
 function openReplaceConfirmModal() {
@@ -2478,6 +2550,113 @@ function toggleDarkMode() {
   localStorage.setItem('gm_dark', isDark ? '1' : '0');
 }
 
+/* ---- DUPLICATE DETECTION ---- */
+let _duplicates = [];
+let _dupShownKey = '';
+
+function detectDuplicates() {
+  const pts = patients;
+  const groups = [];
+  const flagged = new Set();
+
+  const byNHI = {};
+  pts.forEach(p => {
+    const nhi = (p.nhi || '').trim().toUpperCase();
+    if (nhi) {
+      if (!byNHI[nhi]) byNHI[nhi] = [];
+      byNHI[nhi].push(p);
+    }
+  });
+  Object.entries(byNHI).forEach(([nhi, group]) => {
+    if (group.length > 1) {
+      groups.push({ reason: 'Same NHI: ' + nhi, pids: group.map(p => p.pid) });
+      group.forEach(p => flagged.add(p.pid));
+    }
+  });
+
+  const byName = {};
+  pts.forEach(p => {
+    const fn = (p.firstName || '').trim().toLowerCase();
+    const ln = (p.lastName || '').trim().toLowerCase();
+    if (fn && ln) {
+      const key = fn + '\x00' + ln;
+      if (!byName[key]) byName[key] = [];
+      byName[key].push(p);
+    }
+  });
+  Object.entries(byName).forEach(([key, group]) => {
+    if (group.length > 1 && group.some(p => !flagged.has(p.pid))) {
+      const [fn, ln] = key.split('\x00');
+      const name = (fn.charAt(0).toUpperCase() + fn.slice(1)) + ' ' + (ln.charAt(0).toUpperCase() + ln.slice(1));
+      groups.push({ reason: 'Same name: ' + name, pids: group.map(p => p.pid) });
+      group.forEach(p => flagged.add(p.pid));
+    }
+  });
+
+  return groups;
+}
+
+function checkDuplicates() {
+  const groups = detectDuplicates();
+  _duplicates = groups;
+  const btn = document.getElementById('dupWarnBtn');
+  const countEl = document.getElementById('dupWarnCount');
+
+  if (groups.length === 0) {
+    if (btn) btn.style.display = 'none';
+    _dupShownKey = '';
+    return;
+  }
+
+  const totalPts = new Set(groups.flatMap(g => g.pids)).size;
+  if (btn) btn.style.display = '';
+  if (countEl) countEl.textContent = totalPts;
+
+  const key = groups.map(g => [...g.pids].sort().join(',')).sort().join('|');
+  if (key !== _dupShownKey) {
+    _dupShownKey = key;
+    _showDupModal();
+  }
+}
+
+function _dupPatientLabel(pid) {
+  const p = findPatient(pid);
+  if (!p) return '(unknown)';
+  const name = [p.firstName, p.lastName].filter(Boolean).join(' ') || '(unnamed)';
+  return p.nhi ? name + ' — ' + p.nhi : name;
+}
+
+function _showDupModal() {
+  const groups = _duplicates;
+  if (!groups.length) return;
+  const total = new Set(groups.flatMap(g => g.pids)).size;
+  const descEl = document.getElementById('dupModalDesc');
+  const listEl = document.getElementById('dupModalList');
+  if (descEl) descEl.textContent = total + ' patient' + (total !== 1 ? 's' : '') + ' appear' + (total === 1 ? 's' : '') + ' to be duplicates:';
+  if (listEl) {
+    listEl.innerHTML = groups.map(g =>
+      '<div class="dup-modal-item">' +
+        '<div>' + g.pids.map(pid => h(_dupPatientLabel(pid))).join(', ') + '</div>' +
+        '<div class="dup-modal-reason">' + h(g.reason) + '</div>' +
+      '</div>'
+    ).join('');
+  }
+  document.getElementById('dupModal').classList.add('open');
+}
+
+function openDupModal() {
+  if (!_duplicates.length) return;
+  _showDupModal();
+}
+
+function closeDupModal() {
+  document.getElementById('dupModal').classList.remove('open');
+}
+
+function handleDupOverlay(e) {
+  if (e.target === document.getElementById('dupModal')) closeDupModal();
+}
+
 /* ---- SIGN OUT ---- */
 async function doSignOut() {
   try { await fetch('/api/logout', { method: 'POST' }); } catch (_) {}
@@ -2498,6 +2677,7 @@ async function doSignOut() {
   await loadFromServer();
   renderTeamTabs();
   render();
+  checkDuplicates();
   startAutoRefresh();
   updateLastUpdatedText();
   setInterval(updateLastUpdatedText, 30000);
@@ -2532,6 +2712,7 @@ async function doSignOut() {
       closeImportModal();
       closeMoveModal();
       closeDeleteModal();
+      closeDupModal();
       closePtMenu();
     }
   });
