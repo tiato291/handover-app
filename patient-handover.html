@@ -2375,12 +2375,17 @@ function csvRowToPatient(row) {
   if (sex === 'M' || sex === 'MALE')        gender = 'M';
   else if (sex === 'F' || sex === 'FEMALE') gender = 'F';
   const wardRaw = (row['ward'] || '').trim();
-  const WH_WARD_MAP = {
-    'wh critical care unit':'CCU','wh acute stroke unit':'AT&R',
-    'wh medical ward':'Medical','wh surgical ward':'Surgical'
-  };
-  const ward = WH_WARD_MAP[wardRaw.toLowerCase()]
-    || WARDS.find(w => w.toLowerCase() === wardRaw.toLowerCase())
+  const wardLower = wardRaw.toLowerCase();
+  const WH_WARD_PARTIAL = [
+    { contains: "wh children's", mapped: 'Pediatrics' },
+    { contains: 'wh critical care', mapped: 'CCU' },
+    { contains: 'wh acute stroke', mapped: 'AT&R' },
+    { contains: 'wh medical', mapped: 'Medical' },
+    { contains: 'wh surgical', mapped: 'Surgical' },
+  ];
+  const whMatch = WH_WARD_PARTIAL.find(({ contains }) => wardLower.includes(contains));
+  const ward = (whMatch && whMatch.mapped)
+    || WARDS.find(w => w.toLowerCase() === wardLower)
     || 'Medical';
   return {
     firstName:(row['given name']||'').trim(), lastName:(row['family name']||'').trim(),
