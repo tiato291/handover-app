@@ -867,6 +867,152 @@ body.dark-mode .hdr-sgoc-sel.sgoc-none,
 body.dark-mode .hdr-cov-sel.cov-none { background: #374151; color: var(--muted); border-color: var(--border); }
 body.dark-mode .team-tab { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.14); }
 body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
+
+/* ================================================================
+   MOBILE RESPONSIVE STYLES  ≤ 600 px
+   ================================================================ */
+@media (max-width: 600px) {
+
+  /* ---- APP BAR: 2-row layout ---- */
+  /* DOM order is bar-left / teamTabs / bar-right; use flex order to put
+     bar-right on row 1 alongside bar-left, and team-tabs on row 2. */
+  .app-bar {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 0 12px;
+    gap: 0;
+  }
+  /* Row 1 left: title only, truncate if needed.
+     flex-basis must be 0 (not auto) so the long title text doesn't
+     claim the full row width and push bar-right to a third line. */
+  .bar-left {
+    order: 0;
+    flex: 1 1 0px;
+    min-width: 0;
+    overflow: hidden;
+    height: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+  }
+  .bar-title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-sub   { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Row 1 right: action buttons (must be order:1 so it sits beside bar-left) */
+  .bar-right { order: 1; flex: none; height: 48px; gap: 5px; align-items: center; }
+  /* Collapse "Add Patient" and "Menu" to icon-only to save header width */
+  .btn-add-pt {
+    font-size: 0; gap: 0;
+    padding: 0 9px; height: 34px; min-width: 34px;
+  }
+  .btn-add-pt svg { display: block; width: 15px; height: 15px; }
+  .btn-hdr-menu {
+    font-size: 0; gap: 0;
+    padding: 0 9px; height: 30px; min-width: 34px;
+  }
+  .btn-hdr-menu svg { display: block; width: 14px; height: 14px; }
+  /* Row 2: team tabs fill full width (order:2 pushes them to next row) */
+  .team-tabs {
+    order: 2;
+    flex: 0 0 100%;
+    height: 42px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding: 0;
+    align-items: center;
+  }
+  /* Show team-tab delete button on all tabs (no hover on touch) */
+  .team-tab .tdel { display: inline; }
+
+  /* ---- FILTER BAR: 2-row (coverage row + search/sort row) ---- */
+  .filter-bar {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 0;
+    /* 48px row1 + 1px border + 42px row2 = 91px app-bar height */
+    top: 91px;
+    gap: 0;
+    align-items: stretch;
+  }
+  .filter-left {
+    flex: 0 0 100%;
+    height: 40px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding: 0 12px;
+  }
+  .filter-left::-webkit-scrollbar { display: none; }
+  .filter-lbl { display: none; } /* label removed to save space */
+  .filter-right {
+    flex: 0 0 100%;
+    height: 42px;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .search-inp { flex: 1; width: auto; min-width: 0; }
+  .sort-sel   { max-width: 130px; }
+
+  /* ---- MAIN ---- */
+  .main { padding: 10px; }
+
+  /* ---- GRID: single column on mobile ---- */
+  .grid { grid-template-columns: 1fr; gap: 10px; }
+
+  /* ---- CARD ---- */
+  .card-top  { padding: 10px 44px 10px 12px; }
+  .card-body { padding: 12px; gap: 10px; }
+  .hdiv      { margin: 2px -12px 0; }
+
+  /* Allow longer patient names to show on mobile */
+  .hdr-name-inp { max-width: 20ch; }
+
+  /* ---- TOUCH TARGETS ---- */
+  /* Card body inputs: taller tap areas */
+  .inp, .card-sel, .ward-sel { font-size: 14px; padding: 6px 1px; min-height: 34px; }
+  textarea.inp { min-height: 40px; }
+  /* Card header inline inputs */
+  .hdr-inp, .hdr-sel { padding: 4px 3px; min-height: 34px; }
+  .hdr-name-inp { font-size: 15px; }
+  /* Larger checkboxes */
+  .job-cb { width: 18px; height: 18px; min-width: 18px; }
+  /* Job delete: always visible on touch (no hover state) */
+  .job-del { opacity: 1 !important; padding: 4px 8px; font-size: 18px; }
+  /* Drag handle: faintly always visible */
+  .job-drag-handle { opacity: 0.25 !important; }
+  /* Add job + preset buttons */
+  .btn-addjob { padding: 6px 12px; min-height: 36px; }
+  .pre-btn    { padding: 7px 12px; font-size: 12px; }
+  /* Filter buttons */
+  .filter-btn { padding: 5px 10px; min-height: 32px; }
+
+  /* ---- MODALS: stack buttons vertically for easier tapping ---- */
+  .modal-btns { flex-direction: column; gap: 8px; }
+  .modal-btn-cancel,
+  .modal-btn-confirm  { padding: 13px; font-size: 14px; }
+  .import-action-btns { flex-direction: column; gap: 8px; }
+  .import-btn-add,
+  .import-btn-replace { padding: 13px; font-size: 13px; }
+
+  /* ---- HEADER OVERFLOW DROPDOWN ---- */
+  .hdr-dropdown  { right: -4px; min-width: min(220px, calc(100vw - 24px)); }
+  .hdr-menu-item { padding: 12px 16px; font-size: 14px; }
+
+  /* ---- PATIENT 3-DOT DROPDOWN ---- */
+  .pt-dropdown button { padding: 12px 16px; font-size: 14px; }
+
+  /* ---- TOAST ---- */
+  #toast {
+    bottom: 16px;
+    max-width: calc(100vw - 32px);
+    white-space: normal;
+    text-align: center;
+    font-size: 12px;
+  }
+}
 </style>
 </head>
 <body>
