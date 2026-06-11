@@ -1295,10 +1295,10 @@ let _moveToTeam      = null;
 let _deleteTargetPid = null;
 
 let _lastSaveMs        = 0;
-let _lastUpdateMs      = Date.now();
 const _saveTimers      = {};
 let _autoRefreshTimer  = null;
 let searchQuery        = '';
+let _teamLastEdited    = {};
 
 /* ---- HELPERS ---- */
 function newPid() {
@@ -1334,9 +1334,16 @@ function defaultTeams() {
 }
 
 /* ---- SAVE FUNCTIONS ---- */
+function stampTeamEdit(tid) {
+  _teamLastEdited[tid] = Date.now();
+  localStorage.setItem('gm_team_edited', JSON.stringify(_teamLastEdited));
+  updateLastUpdatedText();
+}
+
 function savePatient(pid) {
   clearTimeout(_saveTimers[pid]);
   updateCount();
+  stampTeamEdit(currentTeam);
   _saveTimers[pid] = setTimeout(() => _doSavePatient(pid), 300);
 }
 
@@ -1433,7 +1440,6 @@ async function loadFromServer() {
     }
     patients = getTeamPatients(currentTeam);
     normalizePatients();
-    _lastUpdateMs = Date.now();
   } catch(e) {
     console.warn('Could not load from server:', e);
     teams = defaultTeams();
@@ -1510,7 +1516,6 @@ async function doAutoRefresh() {
     }
     patients = getTeamPatients(currentTeam);
     normalizePatients();
-    _lastUpdateMs = Date.now();
     updateLastUpdatedText();
     renderTeamTabs();
     render();
@@ -1600,6 +1605,7 @@ function switchTeam(tid) {
   currentTeam   = tid;
   currentFilter = 'All';
   localStorage.setItem('gm_cur_team', tid);
+  updateLastUpdatedText();
   patients = getTeamPatients(currentTeam);
   normalizePatients();
   renderTeamTabs();
@@ -1988,6 +1994,8 @@ function confirmMovePatient() {
   if (!allPatients[toTeam]) allPatients[toTeam] = [];
   allPatients[toTeam].push(moved);
   _lastSaveMs = Date.now();
+  stampTeamEdit(fromTeam);
+  stampTeamEdit(toTeam);
   fetch('/api/patient', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(moved)
   }).catch(e => console.error('[patient] Move save failed:', e));
@@ -2650,6 +2658,7 @@ function confirmClearAll() {
   (allPatients[currentTeam] || []).forEach(p => deletePatientFromServer(p.pid, currentTeam));
   allPatients[currentTeam] = [];
   patients = allPatients[currentTeam];
+  stampTeamEdit(currentTeam);
   render(); closeClearModal();
 }
 
@@ -2693,8 +2702,20 @@ function setSearch(val) {
 function updateLastUpdatedText() {
   const el = document.getElementById('lastUpdated');
   if (!el) return;
-  const mins = Math.floor((Date.now() - _lastUpdateMs) / 60000);
-  el.textContent = mins < 1 ? 'Just updated' : 'Updated ' + mins + ' min' + (mins > 1 ? 's' : '') + ' ago';
+  const ts = _teamLastEdited[currentTeam];
+  if (!ts) { el.textContent = ''; return; }
+  const d    = new Date(ts);
+  const now  = new Date();
+  const hh   = d.getHours().toString().padStart(2, '0');
+  const mm   = d.getMinutes().toString().padStart(2, '0');
+  const time = hh + ':' + mm;
+  const sameDay = d.getFullYear() === now.getFullYear() &&
+                  d.getMonth()    === now.getMonth()    &&
+                  d.getDate()     === now.getDate();
+  const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  el.textContent = sameDay
+    ? 'Edited ' + time
+    : 'Edited ' + DAY_NAMES[d.getDay()] + ' ' + time;
 }
 
 function toggleDarkMode() {
@@ -2826,13 +2847,16 @@ async function doSignOut() {
     document.body.classList.add('dark-mode');
   }
 
+  try { _teamLastEdited = JSON.parse(localStorage.getItem('gm_team_edited') || '{}'); } catch(_) {}
+
   await loadFromServer();
   renderTeamTabs();
   render();
   checkDuplicates();
   startAutoRefresh();
   updateLastUpdatedText();
-  setInterval(updateLastUpdatedText, 30000);
+  // Refresh at midnight so "Edited Mon 14:32" becomes "Edited 14:32" when the day rolls over
+  setInterval(updateLastUpdatedText, 60000);
 
   // Fire-and-forget orphan cleanup after initial load
   fetch('/api/cleanup', { method: 'POST' }).catch(() => {});
