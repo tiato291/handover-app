@@ -538,6 +538,13 @@ body.view-mode .edit-only-item { display: none !important; }
 .import-preview-name { font-weight: 600; color: var(--text); white-space: nowrap; }
 .import-preview-meta { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .import-preview-more { text-align: center; color: var(--muted); font-size: 11px; padding: 6px 0 2px; }
+.import-preview-section-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--muted); margin: 10px 2px 4px;
+}
+.import-preview-section-hdr a { color: var(--pri); text-decoration: none; text-transform: none; font-weight: 600; letter-spacing: normal; }
+.import-preview-section-hdr a:hover { text-decoration: underline; }
 .import-action-question {
   font-size: 12px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.7px; color: var(--muted); margin: 16px 0 8px;
@@ -1071,6 +1078,13 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
           </svg>
           Import CSV
         </button>
+        <button class="hdr-menu-item" onclick="exportHandoverCSV();closeHeaderMenu()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Export Handover Sheet
+        </button>
         <button class="hdr-menu-item danger edit-only-item" onclick="openClearModal();closeHeaderMenu()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14H6L5,6"/>
@@ -1098,7 +1112,7 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
     <button class="filter-btn"        data-filter="SMO Review"    onclick="setFilter('SMO Review')">SMO Review</button>
     <button class="filter-btn"        data-filter="RMO Review"    onclick="setFilter('RMO Review')">RMO Review</button>
     <button class="filter-btn"        data-filter="Results Chase" onclick="setFilter('Results Chase')">Results Chase</button>
-    <button class="filter-btn"        data-filter="No Jobs"       onclick="setFilter('No Jobs')">No Jobs</button>
+    <button class="filter-btn"        data-filter="No Review"     onclick="setFilter('No Review')">No Review</button>
   </div>
   <div class="filter-right">
     <input type="search" id="searchInp" class="search-inp no-print" placeholder="Search name or NHI…" oninput="setSearch(this.value)" autocomplete="off">
@@ -1188,6 +1202,26 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
   </div>
 </div>
 
+<!-- Handover Sheet Import Preview Modal -->
+<div class="modal-overlay" id="handoverImportModal" onclick="handleHandoverImportOverlayClick(event)">
+  <div class="import-modal-box" role="dialog" aria-modal="true" aria-labelledby="handoverImportModalTitle">
+    <div class="import-modal-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--pri)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    </div>
+    <div class="modal-title" id="handoverImportModalTitle">Review Handover Sheet Import</div>
+    <div class="import-stats" id="handoverImportStats"></div>
+    <div class="import-preview-list" id="handoverImportPreviewList" style="max-height:340px"></div>
+    <div class="modal-btns" style="margin-top:10px">
+      <button class="modal-btn-cancel" onclick="closeHandoverImportModal()">Cancel</button>
+      <button class="modal-btn-confirm" id="handoverImportApplyBtn" onclick="applyHandoverImport()">Apply</button>
+    </div>
+  </div>
+</div>
+
 <!-- Move Patient Modal -->
 <div class="modal-overlay" id="moveModal" onclick="handleMoveOverlayClick(event)">
   <div class="modal-box" role="dialog" aria-modal="true">
@@ -1269,9 +1303,9 @@ const PRESETS = [
   'Heart Rate Review','Blood Pressure Review','For MDT',
   'Wound Review','Imaging Chase','Urine Output Check','Weekend Discharge'
 ];
-const COV      = ['RMO Review','SMO Review','Results Chase','No Jobs'];
-const COV_SLUG  = { 'RMO Review':'rmo', 'SMO Review':'smo', 'Results Chase':'results', 'No Jobs':'nojobs' };
-const COV_ORDER = { 'SMO Review':0, 'RMO Review':1, 'Results Chase':2, 'No Jobs':3 };
+const COV      = ['RMO Review','SMO Review','Results Chase','No Review'];
+const COV_SLUG  = { 'RMO Review':'rmo', 'SMO Review':'smo', 'Results Chase':'results', 'No Review':'nojobs' };
+const COV_ORDER = { 'SMO Review':0, 'RMO Review':1, 'Results Chase':2, 'No Review':3 };
 const WARDS    = ['CCU','AT&R','Medical','Surgical','Pediatrics'];
 const WARD_ORDER = { CCU: 0, 'AT&R': 1, Medical: 2, Surgical: 3, Pediatrics: 4 };
 const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -1398,7 +1432,7 @@ function normalizePatients() {
     if (p.genderOther === undefined) p.genderOther = '';
     if (!p.ward)     p.ward     = 'Medical';
     if (!p.jobs)     p.jobs     = [];
-    if (!p.coverage) p.coverage = 'No Jobs';
+    if (!p.coverage) p.coverage = 'No Review';
   });
 }
 
@@ -1671,7 +1705,7 @@ function addPatient() {
   const p = {
     pid: newPid(), teamId: currentTeam,
     firstName:'', lastName:'', age:'', gender:'', genderOther:'', nhi:'', ward:'Medical', bed:'',
-    diagnosis:'', sgoc:'', sgocNote:'', assessment:'', background:'', coverage:'No Jobs', jobs:[]
+    diagnosis:'', sgoc:'', sgocNote:'', assessment:'', background:'', coverage:'No Review', jobs:[]
   };
   patients.unshift(p);
   pushUndo({ type: 'add', pid: p.pid, teamId: currentTeam, desc: 'added patient' });
@@ -1733,7 +1767,7 @@ function setCoverage(pid, val) {
   savePatient(pid);
   const card = qpid(pid);
   if (!card) return;
-  const eff  = val || 'No Jobs';
+  const eff  = val || 'No Review';
   const slug = COV_SLUG[eff] || '';
   const covSel = card.querySelector('.hdr-cov-sel');
   if (covSel) {
@@ -2338,7 +2372,7 @@ function renderJobs(pid) {
 
 function cardHTML(p) {
   const pid     = p.pid;
-  const covEff  = p.coverage || 'No Jobs';
+  const covEff  = p.coverage || 'No Review';
   const covSlug = COV_SLUG[covEff] || '';
   return (
     '<div class="card" data-pid="' + pid + '">' +
@@ -2482,7 +2516,19 @@ function handleImportFile(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    const rows = parseCSV(e.target.result);
+    const text = e.target.result;
+    const rawRows = parseCsvRowsRaw(text);
+    if (rawRows.length > 0 && looksLikeHandoverSheetCSV(rawRows[0])) {
+      const handoverRows = parseHandoverSheetCSV(text);
+      if (!handoverRows.length) {
+        alert('No valid patient rows found in the handover sheet.');
+        return;
+      }
+      openHandoverImportPreview(diffHandoverSheet(handoverRows, patients));
+      return;
+    }
+
+    const rows = parseCSV(text);
     _pendingImport = rows.map(csvRowToPatient).filter(p => p.firstName || p.lastName || p.nhi);
     if (!_pendingImport.length) {
       alert('No valid patient rows found in the CSV. Check that the file has the expected column headers.');
@@ -2629,6 +2675,340 @@ function handleReplaceConfirmOverlay(e) {
 }
 
 function doReplaceConfirmed() { closeReplaceConfirmModal(); doImport(true); }
+
+/* ---- HANDOVER SHEET IMPORT / EXPORT ----
+   Distinct from the simple ward-list CSV import above. This format is
+   multi-row-per-patient (extra pending tasks are extra rows with every
+   other column blank) and matches patients by NHI against the current
+   team, so updates never touch other teams and never delete/auto-complete
+   an existing job — only add task text that isn't already present. */
+
+function escapeCsvField(v) {
+  v = String(v == null ? '' : v);
+  return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+
+// Raw row tokenizer (unlike parseCSV above, doesn't key by lowercased header
+// name) — needed because this sheet's first column and several trailing
+// columns are blank/unlabeled, so header-name lookup can't disambiguate them.
+function parseCsvRowsRaw(text) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  function parseLine(line) {
+    const fields = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (inQ) {
+        if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+        else if (c === '"') { inQ = false; }
+        else { cur += c; }
+      } else {
+        if (c === '"') { inQ = true; }
+        else if (c === ',') { fields.push(cur); cur = ''; }
+        else { cur += c; }
+      }
+    }
+    fields.push(cur);
+    return fields;
+  }
+  const rows = [];
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    rows.push(parseLine(line));
+  }
+  return rows;
+}
+
+function looksLikeHandoverSheetCSV(headerRow) {
+  const lower = (headerRow || []).map(h => h.trim().toLowerCase());
+  return lower.includes('nhi') && lower.includes('location') && lower.includes('tasks');
+}
+
+function normalizeHandoverCoverage(raw) {
+  const s = (raw || '').trim().toLowerCase();
+  if (s === 'smo review') return 'SMO Review';
+  if (s === 'rmo review') return 'RMO Review';
+  if (s === 'results chase') return 'Results Chase';
+  if (s === 'no review') return 'No Review';
+  return '';
+}
+
+function mapWardLoose(raw) {
+  const s = (raw || '').trim();
+  const direct = WARDS.find(w => w.toLowerCase() === s.toLowerCase());
+  if (direct) return direct;
+  const lower = s.toLowerCase();
+  if (lower.includes('medical')) return 'Medical';
+  if (lower.includes('surgical')) return 'Surgical';
+  if (lower.includes('pediatric') || lower.includes('paediatric')) return 'Pediatrics';
+  if (lower.includes('ccu')) return 'CCU';
+  if (lower.includes('at&r') || lower.includes('atr')) return 'AT&R';
+  return 'Medical';
+}
+
+function parseHandoverName(raw) {
+  const parts = (raw || '').split(',');
+  return {
+    lastName: (parts[0] || '').trim().toUpperCase(),
+    firstName: (parts[1] || '').trim(),
+  };
+}
+
+function parseHandoverLocation(raw) {
+  const s = (raw || '').trim();
+  const idx = s.indexOf(' ');
+  if (idx === -1) return { ward: mapWardLoose(s), bed: '' };
+  return { ward: mapWardLoose(s.slice(0, idx)), bed: s.slice(idx + 1).trim() };
+}
+
+function parseHandoverSheetCSV(text) {
+  const allRows = parseCsvRowsRaw(text);
+  if (allRows.length < 2) return [];
+
+  const headers = allRows[0].map(h => h.trim());
+  const col = {
+    coverage: 0,
+    name: headers.indexOf('Name'),
+    nhi: headers.indexOf('NHI'),
+    location: headers.indexOf('Location'),
+    goc: headers.indexOf('GOC'),
+    diagnosis: headers.indexOf('Current Diagnosis'),
+    assessment: headers.indexOf('Assessment'),
+    tasks: headers.indexOf('Tasks'),
+    background: headers.indexOf('Background'),
+  };
+
+  const result = [];
+  let current = null;
+
+  for (const cells of allRows.slice(1)) {
+    const nhi = (cells[col.nhi] || '').trim().toUpperCase();
+    const taskText = (cells[col.tasks] || '').trim();
+
+    if (nhi) {
+      const name = parseHandoverName(cells[col.name] || '');
+      const loc = parseHandoverLocation(cells[col.location] || '');
+      const gocRaw = (cells[col.goc] || '').trim().toUpperCase();
+      current = {
+        coverage: normalizeHandoverCoverage(cells[col.coverage] || ''),
+        firstName: name.firstName,
+        lastName: name.lastName,
+        nhi,
+        ward: loc.ward,
+        bed: loc.bed,
+        sgoc: ['A', 'B', 'C', 'D'].includes(gocRaw) ? gocRaw : '',
+        diagnosis: (cells[col.diagnosis] || '').trim(),
+        assessment: (cells[col.assessment] || '').trim(),
+        background: (cells[col.background] || '').trim(),
+        tasks: taskText ? [taskText] : [],
+      };
+      result.push(current);
+    } else if (current && taskText) {
+      current.tasks.push(taskText);
+    }
+  }
+
+  return result;
+}
+
+const HANDOVER_SHEET_HEADERS = ['', 'Name', 'NHI', 'Location', 'GOC', 'Current Diagnosis', 'Assessment', 'Tasks', 'Background'];
+
+function buildHandoverCSV(patientList) {
+  const lines = [HANDOVER_SHEET_HEADERS.map(escapeCsvField).join(',')];
+
+  patientList.forEach(p => {
+    const pendingTasks = (p.jobs || []).filter(j => !j.done).map(j => j.text || '');
+    const taskRows = pendingTasks.length > 0 ? pendingTasks : [''];
+    taskRows.forEach((taskText, i) => {
+      const cells = i === 0
+        ? [
+            p.coverage || '', (p.lastName || '') + ', ' + (p.firstName || ''), p.nhi || '',
+            ((p.ward || '') + ' ' + (p.bed || '')).trim(), p.sgoc || '',
+            p.diagnosis || '', p.assessment || '', taskText, p.background || '',
+          ]
+        : ['', '', '', '', '', '', '', taskText, ''];
+      lines.push(cells.map(escapeCsvField).join(','));
+    });
+  });
+
+  return lines.join('\r\n');
+}
+
+function exportHandoverCSV() {
+  const team = teams.find(t => t.id === currentTeam);
+  const csv = buildHandoverCSV(patients);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const scope = (team ? team.name : currentTeam).replace(/\s+/g, '-').toLowerCase();
+  a.download = 'handover-' + scope + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+const HANDOVER_DIFF_FIELD_LABELS = {
+  coverage: 'Coverage', ward: 'Ward', bed: 'Bed', sgoc: 'GOC',
+  diagnosis: 'Diagnosis', assessment: 'Assessment', background: 'Background', tasks: 'Tasks',
+};
+
+function diffHandoverSheet(rows, existingPatients) {
+  const byNHI = new Map();
+  existingPatients.filter(p => p.nhi).forEach(p => byNHI.set(p.nhi.trim().toUpperCase(), p));
+
+  const newPatients = [];
+  const updates = [];
+
+  rows.forEach(row => {
+    const match = byNHI.get(row.nhi);
+    if (!match) { newPatients.push(row); return; }
+
+    const changedFields = [];
+    if ((match.coverage || '') !== row.coverage) changedFields.push('coverage');
+    if ((match.ward || '') !== row.ward) changedFields.push('ward');
+    if ((match.bed || '') !== row.bed) changedFields.push('bed');
+    if ((match.sgoc || '') !== row.sgoc) changedFields.push('sgoc');
+    if ((match.diagnosis || '') !== row.diagnosis) changedFields.push('diagnosis');
+    if ((match.assessment || '') !== row.assessment) changedFields.push('assessment');
+    if ((match.background || '') !== row.background) changedFields.push('background');
+
+    const existingTexts = new Set((match.jobs || []).map(j => (j.text || '').trim().toLowerCase()));
+    const newTasks = row.tasks.filter(t => !existingTexts.has(t.trim().toLowerCase()));
+    if (newTasks.length > 0) changedFields.push('tasks');
+
+    if (changedFields.length > 0) updates.push({ existing: match, incoming: row, changedFields, newTasks });
+  });
+
+  return { newPatients, updates };
+}
+
+/* ---- HANDOVER SHEET IMPORT PREVIEW MODAL ---- */
+let _handoverDiff = null;
+let _handoverSelection = { newPatients: null, updates: null };
+
+function openHandoverImportPreview(diff) {
+  _handoverDiff = diff;
+  _handoverSelection = {
+    newPatients: new Set(diff.newPatients.map((_, i) => i)),
+    updates: new Set(diff.updates.map((_, i) => i)),
+  };
+  renderHandoverImportPreview();
+  document.getElementById('handoverImportModal').classList.add('open');
+}
+
+function closeHandoverImportModal() {
+  document.getElementById('handoverImportModal').classList.remove('open');
+  _handoverDiff = null;
+}
+
+function handleHandoverImportOverlayClick(e) {
+  if (e.target === document.getElementById('handoverImportModal')) closeHandoverImportModal();
+}
+
+function toggleHandoverSelection(kind, idx) {
+  const set = _handoverSelection[kind];
+  if (set.has(idx)) set.delete(idx); else set.add(idx);
+  renderHandoverImportPreview();
+}
+
+function toggleHandoverSelectAll(kind, total) {
+  const set = _handoverSelection[kind];
+  if (set.size === total) set.clear();
+  else { set.clear(); for (let i = 0; i < total; i++) set.add(i); }
+  renderHandoverImportPreview();
+}
+
+function renderHandoverImportPreview() {
+  const diff = _handoverDiff;
+  if (!diff) return;
+  const selectedCount = _handoverSelection.newPatients.size + _handoverSelection.updates.size;
+
+  document.getElementById('handoverImportStats').innerHTML =
+    '<strong>' + diff.newPatients.length + '</strong> new · <strong>' + diff.updates.length + '</strong> updated';
+
+  let html = '';
+
+  if (diff.newPatients.length === 0 && diff.updates.length === 0) {
+    html = '<div class="import-preview-more">No new or changed patients found in this sheet.</div>';
+  }
+
+  if (diff.newPatients.length > 0) {
+    html += '<div class="import-preview-section-hdr">' +
+      '<span>New Patients — ' + diff.newPatients.length + '</span>' +
+      '<a href="#" onclick="toggleHandoverSelectAll(\'newPatients\',' + diff.newPatients.length + ');return false;">' +
+      (_handoverSelection.newPatients.size === diff.newPatients.length ? 'Deselect all' : 'Select all') + '</a></div>';
+    html += diff.newPatients.map((row, i) => {
+      const name = [row.firstName, row.lastName].filter(Boolean).join(' ') || '(no name)';
+      const checked = _handoverSelection.newPatients.has(i) ? 'checked' : '';
+      return '<label class="import-preview-item" style="cursor:pointer">' +
+        '<input type="checkbox" ' + checked + ' onchange="toggleHandoverSelection(\'newPatients\',' + i + ')" style="margin-right:10px">' +
+        '<span style="flex:1"><span class="import-preview-name">' + h(name) + '</span> ' +
+        '<span class="import-preview-meta">' + h(row.nhi) + ' · ' + h(row.ward) + ' ' + h(row.bed) +
+        ' · ' + row.tasks.length + ' task' + (row.tasks.length !== 1 ? 's' : '') + '</span></span></label>';
+    }).join('');
+  }
+
+  if (diff.updates.length > 0) {
+    html += '<div class="import-preview-section-hdr">' +
+      '<span>Updates — ' + diff.updates.length + '</span>' +
+      '<a href="#" onclick="toggleHandoverSelectAll(\'updates\',' + diff.updates.length + ');return false;">' +
+      (_handoverSelection.updates.size === diff.updates.length ? 'Deselect all' : 'Select all') + '</a></div>';
+    html += diff.updates.map((u, i) => {
+      const name = [u.existing.firstName, u.existing.lastName].filter(Boolean).join(' ') || '(no name)';
+      const checked = _handoverSelection.updates.has(i) ? 'checked' : '';
+      const changedLabels = u.changedFields.map(f => HANDOVER_DIFF_FIELD_LABELS[f] || f).join(', ');
+      const taskNote = u.newTasks.length > 0 ? ' (+' + u.newTasks.length + ' new task' + (u.newTasks.length !== 1 ? 's' : '') + ')' : '';
+      return '<label class="import-preview-item" style="cursor:pointer">' +
+        '<input type="checkbox" ' + checked + ' onchange="toggleHandoverSelection(\'updates\',' + i + ')" style="margin-right:10px">' +
+        '<span style="flex:1"><span class="import-preview-name">' + h(name) + '</span> ' +
+        '<span class="import-preview-meta">' + h(u.existing.nhi) + ' — ' + h(changedLabels) + h(taskNote) + '</span></span></label>';
+    }).join('');
+  }
+
+  document.getElementById('handoverImportPreviewList').innerHTML = html;
+  const applyBtn = document.getElementById('handoverImportApplyBtn');
+  applyBtn.textContent = 'Apply (' + selectedCount + ')';
+  applyBtn.disabled = selectedCount === 0;
+}
+
+function applyHandoverImport() {
+  const diff = _handoverDiff;
+  if (!diff) return;
+
+  diff.newPatients.forEach((row, i) => {
+    if (!_handoverSelection.newPatients.has(i)) return;
+    const p = {
+      pid: newPid(), teamId: currentTeam,
+      firstName: row.firstName, lastName: row.lastName, age: '', gender: '', genderOther: '',
+      nhi: row.nhi, ward: row.ward, bed: row.bed,
+      diagnosis: row.diagnosis, sgoc: row.sgoc, sgocNote: '',
+      assessment: row.assessment, background: row.background, coverage: row.coverage,
+      jobs: row.tasks.map(text => ({ id: newJid(), text, done: false })),
+    };
+    patients.unshift(p);
+    pushUndo({ type: 'add', pid: p.pid, teamId: currentTeam, desc: 'imported ' + trunc([p.firstName, p.lastName].filter(Boolean).join(' ') || 'patient') });
+    savePatient(p.pid);
+  });
+
+  diff.updates.forEach((u, i) => {
+    if (!_handoverSelection.updates.has(i)) return;
+    const p = u.existing;
+    p.coverage = u.incoming.coverage;
+    p.ward = u.incoming.ward;
+    p.bed = u.incoming.bed;
+    p.sgoc = u.incoming.sgoc;
+    p.diagnosis = u.incoming.diagnosis;
+    p.assessment = u.incoming.assessment;
+    p.background = u.incoming.background;
+    u.newTasks.forEach(text => p.jobs.push({ id: newJid(), text, done: false }));
+    savePatient(p.pid);
+  });
+
+  stampTeamEdit(currentTeam);
+  render();
+  closeHandoverImportModal();
+  checkDuplicates();
+  showToast('Handover sheet import applied');
+}
 
 /* ---- CLEAR ALL MODAL ---- */
 function openClearModal() {
