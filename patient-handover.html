@@ -1078,7 +1078,7 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
           </svg>
           Import CSV
         </button>
-        <button class="hdr-menu-item" onclick="exportHandoverCSV();closeHeaderMenu()">
+        <button class="hdr-menu-item" onclick="exportHandoverSheet();closeHeaderMenu()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
@@ -2683,11 +2683,6 @@ function doReplaceConfirmed() { closeReplaceConfirmModal(); doImport(true); }
    team, so updates never touch other teams and never delete/auto-complete
    an existing job — only add task text that isn't already present. */
 
-function escapeCsvField(v) {
-  v = String(v == null ? '' : v);
-  return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
-}
-
 // Raw row tokenizer (unlike parseCSV above, doesn't key by lowercased header
 // name) — needed because this sheet's first column and several trailing
 // columns are blank/unlabeled, so header-name lookup can't disambiguate them.
@@ -2810,40 +2805,8 @@ function parseHandoverSheetCSV(text) {
   return result;
 }
 
-const HANDOVER_SHEET_HEADERS = ['', 'Name', 'NHI', 'Location', 'GOC', 'Current Diagnosis', 'Assessment', 'Tasks', 'Background'];
-
-function buildHandoverCSV(patientList) {
-  const lines = [HANDOVER_SHEET_HEADERS.map(escapeCsvField).join(',')];
-
-  patientList.forEach(p => {
-    const pendingTasks = (p.jobs || []).filter(j => !j.done).map(j => j.text || '');
-    const taskRows = pendingTasks.length > 0 ? pendingTasks : [''];
-    taskRows.forEach((taskText, i) => {
-      const cells = i === 0
-        ? [
-            p.coverage || '', (p.lastName || '') + ', ' + (p.firstName || ''), p.nhi || '',
-            ((p.ward || '') + ' ' + (p.bed || '')).trim(), p.sgoc || '',
-            p.diagnosis || '', p.assessment || '', taskText, p.background || '',
-          ]
-        : ['', '', '', '', '', '', '', taskText, ''];
-      lines.push(cells.map(escapeCsvField).join(','));
-    });
-  });
-
-  return lines.join('\r\n');
-}
-
-function exportHandoverCSV() {
-  const team = teams.find(t => t.id === currentTeam);
-  const csv = buildHandoverCSV(patients);
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  const scope = (team ? team.name : currentTeam).replace(/\s+/g, '-').toLowerCase();
-  a.download = 'handover-' + scope + '-' + new Date().toISOString().slice(0, 10) + '.csv';
-  a.click();
-  URL.revokeObjectURL(url);
+function exportHandoverSheet() {
+  window.location.href = '/api/export?team=' + encodeURIComponent(currentTeam);
 }
 
 const HANDOVER_DIFF_FIELD_LABELS = {
