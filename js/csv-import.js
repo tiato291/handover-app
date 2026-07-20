@@ -29,7 +29,13 @@ function _csvDemoDiff(existing, imported, fields) {
   fields.forEach(function(k) {
     var oldV = (existing[k] || '').toString().trim();
     var newV = (imported[k]  || '').toString().trim();
-    if (newV && newV !== oldV) changes.push((_CSV_FIELD_LABEL[k] || k) + ': ' + (oldV || '—') + ' → ' + newV);
+    // DOA: normalise both sides to D/M before comparing so a stored raw timestamp
+    // ("17/07/2026 17:32") vs a freshly-parsed value ("17/7") isn't a false positive
+    var oldCmp = (k === 'doa') ? parseSurgAdmissionDate(oldV) : oldV;
+    var newCmp = (k === 'doa') ? parseSurgAdmissionDate(newV) : newV;
+    if (newCmp && newCmp !== oldCmp) {
+      changes.push((_CSV_FIELD_LABEL[k] || k) + ': ' + (oldCmp || '—') + ' → ' + newCmp);
+    }
   });
   return changes;
 }
@@ -159,12 +165,11 @@ function showImportPreview() {
     '<strong>' + count + '</strong> patient' + (count !== 1 ? 's' : '') + ' in CSV' +
     (statsParts.length ? ' &mdash; ' + statsParts.join(', ') : '');
 
-  var MAX_SHOW = 6;
   var html = '';
 
   if (updateRows.length) {
     html += '<div class="import-preview-section-hdr"><span>Updates &mdash; ' + updateRows.length + '</span></div>';
-    updateRows.slice(0, MAX_SHOW).forEach(function(r) {
+    updateRows.forEach(function(r) {
       var p    = r.imported;
       var name = [p.firstName, p.lastName].filter(Boolean).join(' ') || '(no name)';
       var meta = [];
@@ -184,14 +189,11 @@ function showImportPreview() {
         '<div class="import-diff-lines">' + diffText + '</div>' +
       '</div>';
     });
-    if (updateRows.length > MAX_SHOW) {
-      html += '<div class="import-preview-more">and ' + (updateRows.length - MAX_SHOW) + ' more&hellip;</div>';
-    }
   }
 
   if (newRows.length) {
     html += '<div class="import-preview-section-hdr"><span>New patients &mdash; ' + newRows.length + '</span></div>';
-    newRows.slice(0, MAX_SHOW).forEach(function(p) {
+    newRows.forEach(function(p) {
       var name = [p.firstName, p.lastName].filter(Boolean).join(' ') || '(no name)';
       var meta = [];
       if (p.nhi)                   meta.push('NHI: ' + p.nhi);
@@ -210,9 +212,6 @@ function showImportPreview() {
         '</div>' +
       '</div>';
     });
-    if (newRows.length > MAX_SHOW) {
-      html += '<div class="import-preview-more">and ' + (newRows.length - MAX_SHOW) + ' more&hellip;</div>';
-    }
   }
 
   document.getElementById('importPreviewList').innerHTML = html;

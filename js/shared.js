@@ -194,13 +194,18 @@ const SURG_CONSULTANTS = {
 
 function parseSurgAdmissionDate(dateStr) {
   if (!dateStr) return '';
-  const datePart = dateStr.split(' ')[0]; // "17-Jul-2026"
+  const s = String(dateStr).trim();
+  // D/M, DD/MM, or DD/MM/YYYY (with optional trailing time) — already-normalised or numeric date
+  const slashM = s.match(/^(\d{1,2})\/(\d{1,2})(?:\/\d{4})?(?:\s.*)?$/);
+  if (slashM) return parseInt(slashM[1], 10) + '/' + parseInt(slashM[2], 10);
+  // DD-Mon-YYYY [HH:MM] — Clinical Portal format
+  const datePart = s.split(' ')[0]; // "17-Jul-2026"
   const parts = datePart.split('-');
-  if (parts.length < 3) return dateStr;
+  if (parts.length < 3) return s;
   const [day, mon] = parts;
   const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const monthNum = MONTHS_SHORT.indexOf(mon) + 1;
-  if (!monthNum) return dateStr;
+  if (!monthNum) return s;
   return parseInt(day, 10) + '/' + monthNum; // "17/7"
 }
 

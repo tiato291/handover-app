@@ -518,7 +518,7 @@ body.view-mode .edit-only-item { display: none !important; }
 .import-stats { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 4px; }
 .import-stats strong { color: var(--text); }
 .import-preview-list {
-  max-height: 210px; overflow-y: auto;
+  max-height: 360px; overflow-y: auto;
   border: 1px solid var(--border); border-radius: 7px;
   background: #f8f9fb; padding: 6px 8px;
   margin: 12px 0 4px;
