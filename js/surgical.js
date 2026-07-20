@@ -125,7 +125,7 @@ function surgCardHTML(p) {
             smoField +
             '<span class="hdr-demog-sep">&middot;</span>' +
             '<span class="hdr-meta-lbl">DOA</span>' +
-            '<input class="hdr-inp surg-doa-inp" type="text" value="' + h(p.doa || '') + '" placeholder="—" maxlength="8"' +
+            '<input class="hdr-inp surg-doa-inp" type="text" value="' + h((p.doa || '').split(' ')[0]) + '" placeholder="—" maxlength="8"' +
               ' oninput="setField(\'' + pid + '\',\'doa\',this.value)">' +
             '<span class="hdr-demog-sep">&middot;</span>' +
             '<span class="hdr-meta-lbl">POD</span>' +
