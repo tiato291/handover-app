@@ -64,7 +64,7 @@ function renderFilterBar() {
       surgFL.innerHTML = '<span class="filter-lbl">Consultant</span>' +
         opts.map(c =>
           '<button class="filter-btn' + (surgConsFilter === c ? ' active' : '') + '"' +
-          ' onclick="setSurgFilter(\'' + h(c) + '\')">' + h(c) + '</button>'
+          ' data-c="' + h(c) + '" onclick="setSurgFilter(this.dataset.c)">' + h(c) + '</button>'
         ).join('');
     }
   } else {
