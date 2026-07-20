@@ -297,8 +297,9 @@ function csvRowToSurgPatient(row) {
 
 /* ---- SURGICAL XLSX IMPORT ---- */
 
-let _surgXlsxDiff    = null; // { updates: [...], unmatched: [...] }
-let _surgXlsxCreated = new Set();
+let _surgXlsxDiff    = null; // { updates, unmatched, noNhi, noChanges, sheetName, colCount, colHeaders }
+let _surgXlsxCreated = { unmatched: new Set(), noNhi: new Set() };
+let _surgXlsxWb      = null; // SheetJS workbook, kept until modal closes
 
 const SURG_XLSX_CLINICAL_FIELDS = [
   { key: 'problemList', label: 'Problem List' },
@@ -306,6 +307,31 @@ const SURG_XLSX_CLINICAL_FIELDS = [
   { key: 'results',     label: 'Results'       },
   { key: 'plan',        label: 'Plan'          },
 ];
+
+// Maps any raw header string → canonical key (case-insensitive, synonym-aware)
+function _surgXlsxNormHeader(raw) {
+  var s = String(raw || '').replace(/\n/g, ' ').trim().toLowerCase();
+  switch (s) {
+    case 'patient':              return 'PATIENT';
+    case 'bed':                  return 'BED';
+    case 'smo & doa':
+    case 'smo':
+    case 'smo/doa':              return 'SMO_DOA';
+    case 'pod':
+    case 'dxpo':
+    case 'dx po':                return 'POD';
+    case 'problem list':
+    case 'problems':
+    case 'problem':              return 'PROBLEM_LIST';
+    case 'background':           return 'BACKGROUND';
+    case 'results':
+    case 'result':               return 'RESULTS';
+    case 'plan':
+    case 'plans':
+    case 'plans/jobs':           return 'PLAN';
+    default:                     return null;
+  }
+}
 
 function triggerSurgXlsxImport() {
   const inp = document.getElementById('importXlsxFileInput');
@@ -324,57 +350,177 @@ function handleSurgXlsxFile(input) {
     try {
       const data = new Uint8Array(e.target.result);
       const wb   = XLSX.read(data, { type: 'array', cellText: false, cellDates: false });
-      const wsName = wb.SheetNames[0];
-      if (!wsName) { alert('No worksheet found in this file.'); return; }
-      const ws   = wb.Sheets[wsName];
-      const rows = parseSurgXlsxRows(ws);
-      if (!rows.length) { alert('No valid patient rows found in this file. Check it is a surgical handover XLSX.'); return; }
-      const diff = diffSurgXlsx(rows);
-      openSurgXlsxPreview(diff);
+      if (!wb.SheetNames.length) { alert('No worksheets found in this file.'); return; }
+      _surgXlsxWb = wb;
+      if (wb.SheetNames.length === 1) {
+        _surgXlsxParseAndPreview(wb.SheetNames[0]);
+      } else {
+        _showSurgXlsxSheetPicker(wb.SheetNames);
+      }
     } catch (err) {
-      console.error('[surg-xlsx] parse error:', err);
-      alert('Could not read this file. Make sure it is a valid surgical handover XLSX.');
+      console.error('[surg-xlsx] read error:', err);
+      alert('Could not read this file. Make sure it is a valid .xlsx file.');
     }
   };
   reader.readAsArrayBuffer(file);
 }
 
-function parseSurgXlsxRows(ws) {
-  const jsonRows = XLSX.utils.sheet_to_json(ws, { raw: true, defval: '' });
-  const result = [];
-  for (const row of jsonRows) {
-    const parsed = _parseSurgXlsxRow(row);
-    if (parsed) result.push(parsed);
+function _showSurgXlsxSheetPicker(sheetNames) {
+  var sel = document.getElementById('surgXlsxSheetSel');
+  sel.innerHTML = sheetNames.map(function(name) {
+    var selected = (name.toUpperCase() === 'BOO') ? ' selected' : '';
+    return '<option value="' + h(name) + '"' + selected + '>' + h(name) + '</option>';
+  }).join('');
+  document.getElementById('surgXlsxSheetPicker').style.display    = '';
+  document.getElementById('surgXlsxPreviewSection').style.display = 'none';
+  document.getElementById('surgXlsxModal').classList.add('open');
+}
+
+function loadSurgXlsxSheet() {
+  var sel = document.getElementById('surgXlsxSheetSel');
+  var sheetName = sel ? sel.value : '';
+  if (!sheetName || !_surgXlsxWb) return;
+  _surgXlsxParseAndPreview(sheetName);
+}
+
+function _surgXlsxParseAndPreview(sheetName) {
+  var wb = _surgXlsxWb;
+  if (!wb) return;
+  var ws = wb.Sheets[sheetName];
+  if (!ws) { _showSurgXlsxError('Sheet "' + sheetName + '" not found in workbook.'); return; }
+
+  var parsed;
+  try {
+    parsed = parseSurgXlsxRows(ws, sheetName);
+  } catch (err) {
+    console.error('[surg-xlsx] parse error:', err);
+    _showSurgXlsxError('Error reading sheet "' + sheetName + '": ' + (err.message || err));
+    return;
   }
-  return result;
+
+  if (parsed.error) { _showSurgXlsxError(parsed.error); return; }
+  if (!parsed.rows.length) {
+    _showSurgXlsxError(
+      'Couldn\'t find any patient rows on sheet "' + sheetName + '". ' +
+      (parsed.colHeaders.length
+        ? 'Recognised columns: ' + parsed.colHeaders.join(', ') + '.'
+        : 'No recognised column headers found.')
+    );
+    return;
+  }
+
+  var diff = diffSurgXlsx(parsed.rows);
+  diff.sheetName  = sheetName;
+  diff.colCount   = parsed.colCount;
+  diff.colHeaders = parsed.colHeaders;
+  openSurgXlsxPreview(diff);
+}
+
+function _showSurgXlsxError(msg) {
+  document.getElementById('surgXlsxSheetPicker').style.display    = 'none';
+  document.getElementById('surgXlsxPreviewSection').style.display = '';
+  document.getElementById('surgXlsxStats').innerHTML =
+    '<span style="color:#c0392b;font-weight:600">' + h(msg) + '</span>';
+  document.getElementById('surgXlsxPreviewList').innerHTML = '';
+  var btn = document.getElementById('surgXlsxConfirmBtn');
+  btn.disabled = true; btn.textContent = 'No Updates';
+  document.getElementById('surgXlsxModal').classList.add('open');
+}
+
+var _XLSX_NHI_RE    = /\b([A-Z]{3}\d{4})\b/;
+var _XLSX_AGE_SE_RE = /^(\d{1,3})(?:y?\/([MF])|([MF]))?$/i;
+
+function parseSurgXlsxRows(ws, sheetName) {
+  var ref = ws['!ref'];
+  if (!ref) return { rows: [], colCount: 0, colHeaders: [], error: 'Sheet "' + (sheetName || '?') + '" appears to be empty.' };
+
+  var fullRange = XLSX.utils.decode_range(ref);
+  var hdrRow    = fullRange.s.r;
+
+  // Scan header row to find real columns — stop after 20 consecutive empty cells
+  var colMap   = {};  // canonical key → col index
+  var colNames  = []; // display names of recognised headers
+  var lastRealCol = fullRange.s.c - 1;
+  var emptyRun    = 0;
+
+  for (var col = fullRange.s.c; col <= fullRange.e.c && emptyRun < 20; col++) {
+    var cell = ws[XLSX.utils.encode_cell({ r: hdrRow, c: col })];
+    var raw  = cell ? String(cell.v || '').trim() : '';
+    if (!raw) { emptyRun++; continue; }
+    emptyRun = 0;
+    lastRealCol = col;
+    var norm = _surgXlsxNormHeader(raw);
+    if (norm && !(norm in colMap)) { colMap[norm] = col; colNames.push(raw); }
+  }
+
+  if (!('PATIENT' in colMap)) {
+    return {
+      rows: [], colCount: 0, colHeaders: colNames,
+      error: colNames.length
+        ? 'No PATIENT column found on sheet "' + (sheetName || '?') + '". Found: ' + colNames.slice(0, 5).join(', ') + '.'
+        : 'No recognisable column headers on sheet "' + (sheetName || '?') + '". Make sure you\'re selecting the right sheet.',
+    };
+  }
+
+  // Limit the ref to real columns only, then parse rows
+  var limitedRef  = XLSX.utils.encode_range({ s: { r: hdrRow, c: fullRange.s.c }, e: { r: fullRange.e.r, c: lastRealCol } });
+  var originalRef = ws['!ref'];
+  var jsonRows;
+  try {
+    ws['!ref'] = limitedRef;
+    jsonRows = XLSX.utils.sheet_to_json(ws, { raw: true, defval: '' });
+  } finally {
+    ws['!ref'] = originalRef;
+  }
+
+  // Remap raw header keys → canonical keys
+  var rows = [];
+  for (var i = 0; i < jsonRows.length; i++) {
+    var normRow = {};
+    var rawRow  = jsonRows[i];
+    Object.keys(rawRow).forEach(function(k) {
+      var norm = _surgXlsxNormHeader(k);
+      if (norm && !(norm in normRow)) normRow[norm] = rawRow[k];
+    });
+    var parsed = _parseSurgXlsxRow(normRow);
+    if (parsed) rows.push(parsed);
+  }
+
+  return { rows: rows, colCount: colNames.length, colHeaders: colNames };
 }
 
 function _parseSurgXlsxRow(row) {
-  // PATIENT cell lines: "SURNAME, Given [Middle] [(Title)]" / "ageSex" / "NHI"
-  const patientRaw = String(row['PATIENT'] || '').trim();
+  var patientRaw = String(row['PATIENT'] || '').trim();
   if (!patientRaw || patientRaw === '(unknown)') return null;
 
-  const lines = patientRaw.split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
-  const nameLine = lines[0] || '';
-  var ageSexStr = '', nhi = '';
+  var lines    = patientRaw.split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
+  var nameLine = lines[0] || '';
 
-  if (lines.length >= 3) {
-    ageSexStr = lines[1];
-    nhi       = lines[2].toUpperCase();
-  } else if (lines.length === 2) {
-    if (/^\d{1,3}[MF]?$/i.test(lines[1])) { ageSexStr = lines[1]; }
-    else { nhi = lines[1].toUpperCase(); }
+  // NHI: find by pattern anywhere in the PATIENT cell
+  var nhi = '';
+  for (var i = 0; i < lines.length; i++) {
+    var m = lines[i].toUpperCase().match(_XLSX_NHI_RE);
+    if (m) { nhi = m[1]; break; }
   }
 
-  // Parse name: "SMITH, John Robert (Mr)"
+  // Age+sex: find in any non-NHI line (handles "81M", "70F", "63y/M")
+  var age = '', gender = '';
+  for (var j = 0; j < lines.length; j++) {
+    var line = lines[j].trim();
+    if (_XLSX_NHI_RE.test(line.toUpperCase())) continue;
+    var am = line.match(_XLSX_AGE_SE_RE);
+    if (am) { age = am[1]; gender = (am[2] || am[3] || '').toUpperCase(); break; }
+  }
+
+  // Name: "SMITH, John Robert (Mr)"
   var lastName = '', firstName = '', middleName = '', title = '';
   var commaIdx = nameLine.indexOf(',');
   if (commaIdx >= 0) {
     lastName = nameLine.slice(0, commaIdx).trim();
-    var rest = nameLine.slice(commaIdx + 1).trim();
+    var rest  = nameLine.slice(commaIdx + 1).trim();
     var titleMatch = rest.match(/\(([^)]+)\)\s*$/);
     title = titleMatch ? titleMatch[1].trim() : '';
-    var givenFull = (titleMatch ? rest.slice(0, titleMatch.index) : rest).trim();
+    var givenFull  = (titleMatch ? rest.slice(0, titleMatch.index) : rest).trim();
     var givenParts = givenFull.split(/\s+/);
     firstName  = givenParts[0] || '';
     middleName = givenParts.slice(1).join(' ') || '';
@@ -382,12 +528,7 @@ function _parseSurgXlsxRow(row) {
     lastName = nameLine;
   }
 
-  // Age+sex: "81M" / "70F" / "81"
-  var ageSexMatch = ageSexStr.match(/^(\d+)([MF])?$/i);
-  var age    = ageSexMatch ? ageSexMatch[1] : '';
-  var gender = (ageSexMatch && ageSexMatch[2]) ? ageSexMatch[2].toUpperCase() : '';
-
-  // BED cell: "Surg\nB12"
+  // BED: "Surg\nB12" or "B12"
   var bedRaw   = String(row['BED'] || '').trim();
   var bedParts = bedRaw.split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
   var bed = '';
@@ -397,21 +538,18 @@ function _parseSurgXlsxRow(row) {
     bed = bedParts[0];
   }
 
-  // SMO & DOA cell: "O'Grady\n15/7"
-  var smoDoaKey = 'SMO & DOA';
-  var smoDoaRaw = String(row[smoDoaKey] || '').trim();
+  // SMO & DOA: "O'Grady\n15/7"
+  var smoDoaRaw   = String(row['SMO_DOA'] || '').trim();
   var smoDoaParts = smoDoaRaw.split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
-  var smoRaw = smoDoaParts[0] || '';
-  var doa    = smoDoaParts[1] || '';
-
-  // Normalize SMO: replace curly apostrophes before lookup
-  var smoLookupKey = smoRaw.toLowerCase().replace(/[‘’ʼ]/g, "'");
+  var smoRaw      = smoDoaParts[0] || '';
+  var doa         = smoDoaParts[1] || '';
+  var smoLookupKey = smoRaw.toLowerCase().replace(/[''ʼ]/g, "'");
   var smoEntry     = SURG_CONSULTANTS[smoLookupKey];
   var smo          = smoEntry ? smoEntry.smo : smoRaw;
   var suggestedTeam = smoEntry ? smoEntry.team : null;
 
   var pod         = String(row['POD']          || '').trim();
-  var problemList = String(row['PROBLEM LIST'] || '').trim();
+  var problemList = String(row['PROBLEM_LIST'] || '').trim();
   var background  = String(row['BACKGROUND']   || '').trim();
   var results     = String(row['RESULTS']      || '').trim();
   var plan        = String(row['PLAN']         || '').trim();
@@ -420,21 +558,17 @@ function _parseSurgXlsxRow(row) {
 }
 
 function diffSurgXlsx(rows) {
-  // Index all surgical patients across all teams by NHI
   var byNHI = new Map();
   Object.keys(allPatients).forEach(function(tid) {
     (allPatients[tid] || []).forEach(function(p) {
-      if (p.compartment === 'surgical' && p.nhi) {
-        byNHI.set(p.nhi.trim().toUpperCase(), p);
-      }
+      if (p.compartment === 'surgical' && p.nhi) byNHI.set(p.nhi.trim().toUpperCase(), p);
     });
   });
 
-  var updates   = [];
-  var unmatched = [];
+  var updates = [], unmatched = [], noNhi = [], noChanges = [];
 
   rows.forEach(function(row) {
-    if (!row.nhi) { unmatched.push(row); return; }
+    if (!row.nhi) { noNhi.push(row); return; }
     var existing = byNHI.get(row.nhi.toUpperCase());
     if (!existing) { unmatched.push(row); return; }
 
@@ -442,39 +576,34 @@ function diffSurgXlsx(rows) {
     SURG_XLSX_CLINICAL_FIELDS.forEach(function(f) {
       var newVal = row[f.key] || '';
       var oldVal = (existing[f.key] || '').trim();
-      if (newVal && newVal !== oldVal) {
-        fieldChanges.push({ key: f.key, label: f.label, oldVal: oldVal, newVal: newVal });
-      }
+      if (newVal && newVal !== oldVal) fieldChanges.push({ key: f.key, label: f.label, oldVal: oldVal, newVal: newVal });
     });
 
-    // POD → opDate: read POD from XLSX and convert to an opDate change
+    // POD → opDate
     var xlsxPodStr = row.pod ? String(row.pod).trim() : '';
     if (xlsxPodStr !== '') {
       var xlsxPod = parseInt(xlsxPodStr, 10);
       if (!isNaN(xlsxPod) && xlsxPod >= 0) {
-        var currentPOD   = computePOD(existing.opDate);
+        var currentPOD    = computePOD(existing.opDate);
         var currentPODStr = currentPOD !== '' ? String(currentPOD) : '';
         if (String(xlsxPod) !== currentPODStr) {
-          fieldChanges.push({
-            key: '_pod_opdate', label: 'POD',
-            oldVal: currentPODStr, newVal: String(xlsxPod),
-            _opDate: opDateFromPOD(xlsxPod),
-          });
+          fieldChanges.push({ key: '_pod_opdate', label: 'POD', oldVal: currentPODStr, newVal: String(xlsxPod), _opDate: opDateFromPOD(xlsxPod) });
         }
       }
     }
 
-    if (fieldChanges.length > 0) {
-      updates.push({ existing: existing, row: row, fieldChanges: fieldChanges });
-    }
+    if (fieldChanges.length > 0) updates.push({ existing: existing, row: row, fieldChanges: fieldChanges });
+    else                          noChanges.push({ existing: existing, row: row });
   });
 
-  return { updates: updates, unmatched: unmatched };
+  return { updates: updates, unmatched: unmatched, noNhi: noNhi, noChanges: noChanges };
 }
 
 function openSurgXlsxPreview(diff) {
   _surgXlsxDiff    = diff;
-  _surgXlsxCreated = new Set();
+  _surgXlsxCreated = { unmatched: new Set(), noNhi: new Set() };
+  document.getElementById('surgXlsxSheetPicker').style.display    = 'none';
+  document.getElementById('surgXlsxPreviewSection').style.display = '';
   renderSurgXlsxPreview();
   document.getElementById('surgXlsxModal').classList.add('open');
 }
@@ -482,7 +611,8 @@ function openSurgXlsxPreview(diff) {
 function closeSurgXlsxModal() {
   document.getElementById('surgXlsxModal').classList.remove('open');
   _surgXlsxDiff    = null;
-  _surgXlsxCreated = new Set();
+  _surgXlsxCreated = { unmatched: new Set(), noNhi: new Set() };
+  _surgXlsxWb      = null;
 }
 
 function handleSurgXlsxOverlayClick(e) {
@@ -494,67 +624,61 @@ function renderSurgXlsxPreview() {
   if (!diff) return;
   var updates   = diff.updates;
   var unmatched = diff.unmatched;
+  var noNhi     = diff.noNhi     || [];
+  var noChanges = diff.noChanges || [];
 
-  var createdCount = _surgXlsxCreated.size;
-  document.getElementById('surgXlsxStats').innerHTML =
-    '<strong>' + updates.length + '</strong> update' + (updates.length !== 1 ? 's' : '') +
-    ' &middot; <strong>' + unmatched.length + '</strong> unmatched' +
-    (createdCount ? ' (<strong>' + createdCount + '</strong> created)' : '');
+  // Stats: sheet info + row breakdown
+  var metaParts = [];
+  if (diff.sheetName) metaParts.push('Sheet: <strong>' + h(diff.sheetName) + '</strong>');
+  if (diff.colCount)  metaParts.push(diff.colCount + ' column' + (diff.colCount !== 1 ? 's' : '') + ' detected');
 
-  var html = '';
+  var statsParts = [];
+  if (updates.length)   statsParts.push('<strong>' + updates.length   + '</strong> to update');
+  if (noChanges.length) statsParts.push('<strong>' + noChanges.length + '</strong> already current');
+  if (unmatched.length) statsParts.push('<strong>' + unmatched.length + '</strong> unmatched');
+  if (noNhi.length)     statsParts.push('<strong>' + noNhi.length     + '</strong> no NHI found');
 
-  if (updates.length > 0) {
+  var statsHTML = (metaParts.length ? metaParts.join(' &middot; ') + '<br>' : '') + statsParts.join(' &middot; ');
+  document.getElementById('surgXlsxStats').innerHTML = statsHTML;
+
+  var html      = '';
+  var surgTeams = teams.filter(function(t) { return teamBelongsTo(t, 'surgical'); });
+
+  // --- Updates ---
+  if (updates.length) {
     html += '<div class="import-preview-section-hdr"><span>Will Update &mdash; ' + updates.length + '</span></div>';
     html += updates.map(function(u) {
-      var name = [u.existing.firstName, u.existing.lastName].filter(Boolean).join(' ') || u.row.nhi || '(unknown)';
+      var name  = [u.existing.firstName, u.existing.lastName].filter(Boolean).join(' ') || u.row.nhi || '(unknown)';
       var inner = '<div class="surg-diff-name">' + h(name) + '<span class="surg-diff-nhi">' + h(u.existing.nhi) + '</span></div>';
       inner += u.fieldChanges.map(function(fc) {
-        var oldTrunc = trunc(fc.oldVal, 72);
-        var newTrunc = trunc(fc.newVal, 72);
         return '<div class="surg-diff-field">' +
           '<span class="surg-diff-label">' + h(fc.label) + '</span>' +
           '<span class="surg-diff-val">' +
-            (oldTrunc ? '<span class="surg-diff-old">' + h(oldTrunc) + '</span> <span class="surg-diff-arrow">&rarr;</span> ' : '') +
-            '<span class="surg-diff-new">' + h(newTrunc) + '</span>' +
+            (fc.oldVal ? '<span class="surg-diff-old">' + h(trunc(fc.oldVal, 72)) + '</span> <span class="surg-diff-arrow">&rarr;</span> ' : '') +
+            '<span class="surg-diff-new">' + h(trunc(fc.newVal, 72)) + '</span>' +
           '</span></div>';
       }).join('');
       return '<div class="surg-diff-row">' + inner + '</div>';
     }).join('');
   }
 
-  if (unmatched.length > 0) {
-    html += '<div class="import-preview-section-hdr"><span>Unmatched &mdash; ' + unmatched.length + '</span></div>';
-    var surgTeams = teams.filter(function(t) { return teamBelongsTo(t, 'surgical'); });
+  // --- Unmatched (NHI present but not in app) ---
+  if (unmatched.length) {
+    html += '<div class="import-preview-section-hdr"><span>Unmatched (NHI not in app) &mdash; ' + unmatched.length + '</span></div>';
     html += unmatched.map(function(row, i) {
-      var created = _surgXlsxCreated.has(i);
-      var name = [row.firstName, row.lastName].filter(Boolean).join(' ') || '(no name)';
-      var metaParts = [];
-      if (row.nhi)  metaParts.push(row.nhi);
-      if (row.bed)  metaParts.push('Bed ' + row.bed);
-      if (row.smo)  metaParts.push(row.smo);
-      var meta = metaParts.join(' &middot; ');
-      var teamOpts = surgTeams.map(function(t) {
-        var sel = t.id === (row.suggestedTeam || currentTeam) ? ' selected' : '';
-        return '<option value="' + h(t.id) + '"' + sel + '>' + h(t.name) + '</option>';
-      }).join('');
-      var teamSel = surgTeams.length > 1
-        ? '<select class="surg-team-sel" id="surgXlsxTeamSel-' + i + '">' + teamOpts + '</select>'
-        : '';
-      var btn = created
-        ? '<span style="color:var(--muted);font-size:11px;font-style:italic">Created</span>'
-        : '<button class="surg-create-btn" onclick="createSurgXlsxPatient(' + i + ')">' +
-            '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
-            ' Create' +
-          '</button>';
-      return '<div class="surg-unmatch-row' + (created ? ' surg-unmatch-done' : '') + '">' +
-        '<div class="surg-diff-name">' + h(name) + '</div>' +
-        '<div class="import-preview-meta">' + meta + '</div>' +
-        '<div class="surg-unmatch-actions">' + teamSel + btn + '</div>' +
-        '</div>';
+      return _surgUnmatchRowHTML(row, i, 'unmatched', surgTeams);
     }).join('');
   }
 
-  if (!updates.length && !unmatched.length) {
+  // --- No NHI detected ---
+  if (noNhi.length) {
+    html += '<div class="import-preview-section-hdr"><span>No NHI detected &mdash; ' + noNhi.length + '</span></div>';
+    html += noNhi.map(function(row, i) {
+      return _surgUnmatchRowHTML(row, i, 'noNhi', surgTeams);
+    }).join('');
+  }
+
+  if (!updates.length && !unmatched.length && !noNhi.length) {
     html = '<div class="import-preview-more">No patient rows found in this sheet.</div>';
   }
 
@@ -567,18 +691,56 @@ function renderSurgXlsxPreview() {
     : 'No Updates';
 }
 
-function createSurgXlsxPatient(idx) {
+function _surgUnmatchRowHTML(row, i, section, surgTeams) {
+  var createdSet = _surgXlsxCreated[section];
+  var created    = createdSet && createdSet.has(i);
+  var selId      = 'surgXlsxTeamSel-' + section + '-' + i;
+
+  var name = [row.firstName, row.lastName].filter(Boolean).join(' ') || '(no name)';
+  var metaParts = [];
+  if (row.nhi)  metaParts.push(row.nhi);
+  else          metaParts.push('<em style="color:var(--muted)">no NHI</em>');
+  if (row.bed)  metaParts.push('Bed ' + row.bed);
+  if (row.smo)  metaParts.push(h(row.smo));
+  var meta = metaParts.join(' &middot; ');
+
+  var teamOpts = surgTeams.map(function(t) {
+    var sel = t.id === (row.suggestedTeam || currentTeam) ? ' selected' : '';
+    return '<option value="' + h(t.id) + '"' + sel + '>' + h(t.name) + '</option>';
+  }).join('');
+  var teamSel = surgTeams.length > 1
+    ? '<select class="surg-team-sel" id="' + selId + '">' + teamOpts + '</select>'
+    : '';
+
+  var btn = created
+    ? '<span style="color:var(--muted);font-size:11px;font-style:italic">Created</span>'
+    : '<button class="surg-create-btn" onclick="createSurgXlsxPatient(\'' + section + '\',' + i + ')">' +
+        '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+        ' Create' +
+      '</button>';
+
+  return '<div class="surg-unmatch-row' + (created ? ' surg-unmatch-done' : '') + '">' +
+    '<div class="surg-diff-name">' + h(name) + '</div>' +
+    '<div class="import-preview-meta">' + meta + '</div>' +
+    '<div class="surg-unmatch-actions">' + teamSel + btn + '</div>' +
+    '</div>';
+}
+
+function createSurgXlsxPatient(section, idx) {
   var diff = _surgXlsxDiff;
-  if (!diff || _surgXlsxCreated.has(idx)) return;
-  var row = diff.unmatched[idx];
+  if (!diff) return;
+  var rowArr     = section === 'noNhi' ? diff.noNhi : diff.unmatched;
+  var createdSet = _surgXlsxCreated[section];
+  if (!rowArr || createdSet.has(idx)) return;
+  var row = rowArr[idx];
   if (!row) return;
 
-  var surgTeams  = teams.filter(function(t) { return teamBelongsTo(t, 'surgical'); });
-  var teamSelEl  = document.getElementById('surgXlsxTeamSel-' + idx);
-  var tid = teamSelEl ? teamSelEl.value
-    : (row.suggestedTeam || (surgTeams[0] && surgTeams[0].id) || currentTeam);
+  var surgTeams = teams.filter(function(t) { return teamBelongsTo(t, 'surgical'); });
+  var selId     = 'surgXlsxTeamSel-' + section + '-' + idx;
+  var teamSelEl = document.getElementById(selId);
+  var tid = teamSelEl ? teamSelEl.value : (row.suggestedTeam || (surgTeams[0] && surgTeams[0].id) || currentTeam);
 
-  var rowPod   = row.pod ? parseInt(String(row.pod).trim(), 10) : NaN;
+  var rowPod    = row.pod ? parseInt(String(row.pod).trim(), 10) : NaN;
   var rowOpDate = (!isNaN(rowPod) && rowPod >= 0) ? opDateFromPOD(rowPod) : '';
   var p = {
     pid: newPid(), teamId: tid, compartment: 'surgical',
@@ -596,14 +758,10 @@ function createSurgXlsxPatient(idx) {
   allPatients[tid].unshift(p);
   savePatient(p.pid);
   stampTeamEdit(tid);
-
-  _surgXlsxCreated.add(idx);
+  createdSet.add(idx);
   renderSurgXlsxPreview();
 
-  if (tid === currentTeam) {
-    patients = getTeamPatients(currentTeam);
-    render();
-  }
+  if (tid === currentTeam) { patients = getTeamPatients(currentTeam); render(); }
   var teamObj = teams.find(function(t) { return t.id === tid; });
   showToast('Created ' + ([p.firstName, p.lastName].filter(Boolean).join(' ') || p.nhi || 'patient') + ' in ' + (teamObj ? teamObj.name : tid));
 }

@@ -232,12 +232,24 @@
         <line x1="12" y1="3" x2="12" y2="15"/>
       </svg>
     </div>
-    <div class="modal-title" id="surgXlsxModalTitle">Review Surgical XLSX Import</div>
-    <div class="import-stats" id="surgXlsxStats"></div>
-    <div class="import-preview-list" id="surgXlsxPreviewList" style="max-height:420px"></div>
-    <div class="modal-btns" style="margin-top:10px">
-      <button class="modal-btn-cancel" onclick="closeSurgXlsxModal()">Cancel</button>
-      <button class="modal-btn-confirm primary" id="surgXlsxConfirmBtn" onclick="applySurgXlsxImport()">Confirm</button>
+    <div class="modal-title" id="surgXlsxModalTitle">Surgical XLSX Import</div>
+    <!-- Step 1: sheet picker (shown when workbook has > 1 sheet) -->
+    <div id="surgXlsxSheetPicker" style="display:none">
+      <div class="import-stats" style="text-align:left;margin-bottom:10px">This workbook has multiple sheets — select which one to import:</div>
+      <select id="surgXlsxSheetSel" class="surg-sheet-sel"></select>
+      <div class="modal-btns" style="margin-top:14px">
+        <button class="modal-btn-cancel" onclick="closeSurgXlsxModal()">Cancel</button>
+        <button class="modal-btn-confirm primary" onclick="loadSurgXlsxSheet()">Load Sheet</button>
+      </div>
+    </div>
+    <!-- Step 2: diff preview -->
+    <div id="surgXlsxPreviewSection" style="display:none">
+      <div class="import-stats" id="surgXlsxStats"></div>
+      <div class="import-preview-list" id="surgXlsxPreviewList" style="max-height:380px"></div>
+      <div class="modal-btns" style="margin-top:10px">
+        <button class="modal-btn-cancel" onclick="closeSurgXlsxModal()">Cancel</button>
+        <button class="modal-btn-confirm primary" id="surgXlsxConfirmBtn" onclick="applySurgXlsxImport()">Confirm</button>
+      </div>
     </div>
   </div>
 </div>

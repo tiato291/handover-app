@@ -1119,4 +1119,13 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
   transition: border-color 0.13s;
 }
 .surg-team-sel:focus { border-color: var(--pri); }
+.surg-sheet-sel {
+  width: 100%; padding: 9px 10px; border-radius: 6px;
+  border: 1.5px solid var(--border); background: var(--bg);
+  font-family: inherit; font-size: 13px; color: var(--text);
+  margin-top: 4px; cursor: pointer; outline: none;
+  transition: border-color 0.13s;
+}
+.surg-sheet-sel:focus { border-color: var(--pri); }
+body.dark-mode .surg-sheet-sel { background: #374151; }
 .modal-btn-confirm.primary { background: var(--pri); }
