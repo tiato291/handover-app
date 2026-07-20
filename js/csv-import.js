@@ -1,6 +1,48 @@
 /* ---- CSV IMPORT ---- */
 let _pendingImport = [];
 
+const _CSV_DEMO_FIELDS_MED  = ['firstName','lastName','age','gender','ward','bed'];
+const _CSV_DEMO_FIELDS_SURG = ['firstName','lastName','middleName','title','age','gender','ward','bed','smo','doa'];
+const _CSV_FIELD_LABEL = {
+  firstName:'First name', lastName:'Last name', middleName:'Middle name',
+  title:'Title', age:'Age', gender:'Sex', ward:'Ward', bed:'Bed', smo:'SMO', doa:'DOA'
+};
+
+function _buildCsvNhiMap(isSurgical) {
+  var map = {};
+  if (isSurgical) {
+    teams.filter(function(t) { return t.compartment === 'surgical'; }).forEach(function(t) {
+      (allPatients[t.id] || []).forEach(function(p) {
+        if (p.nhi) map[p.nhi.trim().toUpperCase()] = p;
+      });
+    });
+  } else {
+    patients.filter(function(p) { return p.nhi; }).forEach(function(p) {
+      map[p.nhi.trim().toUpperCase()] = p;
+    });
+  }
+  return map;
+}
+
+function _csvDemoDiff(existing, imported, fields) {
+  var changes = [];
+  fields.forEach(function(k) {
+    var oldV = (existing[k] || '').toString().trim();
+    var newV = (imported[k]  || '').toString().trim();
+    if (newV && newV !== oldV) changes.push((_CSV_FIELD_LABEL[k] || k) + ': ' + (oldV || '—') + ' → ' + newV);
+  });
+  return changes;
+}
+
+function _csvApplyDemoUpdate(existing, imported, isSurgical) {
+  var fields = isSurgical ? _CSV_DEMO_FIELDS_SURG : _CSV_DEMO_FIELDS_MED;
+  fields.forEach(function(k) {
+    if (imported[k] !== undefined && imported[k] !== '') existing[k] = imported[k];
+  });
+  savePatient(existing.pid);
+  stampTeamEdit(existing.teamId);
+}
+
 function triggerImport() {
   const inp = document.getElementById('importFileInput');
   inp.value = ''; inp.click();
@@ -96,58 +138,114 @@ function csvRowToPatient(row) {
 }
 
 function showImportPreview() {
-  const count = _pendingImport.length;
-  document.getElementById('importStats').innerHTML =
-    '<strong>' + count + ' patient' + (count !== 1 ? 's' : '') + '</strong> found in CSV';
-  const MAX_PREVIEW = 10;
+  var isSurg  = compartment === 'surgical';
+  var fields  = isSurg ? _CSV_DEMO_FIELDS_SURG : _CSV_DEMO_FIELDS_MED;
+  var nhiMap  = _buildCsvNhiMap(isSurg);
 
-  if (compartment === 'surgical') {
-    let html = _pendingImport.slice(0, MAX_PREVIEW).map(p => {
-      const name  = [p.firstName, p.lastName].filter(Boolean).join(' ') || '(no name)';
-      const parts = [];
-      if (p.nhi)  parts.push('NHI: ' + p.nhi);
-      if (p.bed)  parts.push('Bed ' + p.bed);
-      if (p.smo)  parts.push(p.smo);
-      const autoTeam = teams.find(t => t.id === p._autoTeam);
-      if (autoTeam) parts.push('→ ' + autoTeam.name);
-      return '<div class="import-preview-item"><span class="import-preview-name">' + h(name) + '</span>' +
-        '<span class="import-preview-meta">' + h(parts.join(' · ')) + '</span></div>';
-    }).join('');
-    if (count > MAX_PREVIEW) html += '<div class="import-preview-more">and ' + (count - MAX_PREVIEW) + ' more&hellip;</div>';
-    document.getElementById('importPreviewList').innerHTML = html;
-    const affectedTeamIds = new Set(_pendingImport.map(p => p._autoTeam || currentTeam).filter(Boolean));
-    const existingCount = Array.from(affectedTeamIds).reduce((s, tid) => s + (allPatients[tid] || []).length, 0);
-    document.getElementById('importAddBtn').textContent = 'Add to teams';
-    document.getElementById('importReplaceBtn').textContent =
-      existingCount ? 'Replace (' + existingCount + ' existing)' : 'Import as new list';
-    const _dupNoteEl = document.getElementById('importDupNote');
-    if (_dupNoteEl) _dupNoteEl.innerHTML = '';
-    document.getElementById('importModal').classList.add('open');
-    return;
+  var updateRows = [], newRows = [];
+  _pendingImport.forEach(function(p) {
+    if (p.nhi && nhiMap[p.nhi]) {
+      updateRows.push({ imported: p, existing: nhiMap[p.nhi], diffs: _csvDemoDiff(nhiMap[p.nhi], p, fields) });
+    } else {
+      newRows.push(p);
+    }
+  });
+
+  var count = _pendingImport.length;
+  var statsParts = [];
+  if (updateRows.length) statsParts.push('<strong>' + updateRows.length + '</strong> to update');
+  if (newRows.length)    statsParts.push('<strong>' + newRows.length + '</strong> new');
+  document.getElementById('importStats').innerHTML =
+    '<strong>' + count + '</strong> patient' + (count !== 1 ? 's' : '') + ' in CSV' +
+    (statsParts.length ? ' &mdash; ' + statsParts.join(', ') : '');
+
+  var MAX_SHOW = 6;
+  var html = '';
+
+  if (updateRows.length) {
+    html += '<div class="import-preview-section-hdr"><span>Updates &mdash; ' + updateRows.length + '</span></div>';
+    updateRows.slice(0, MAX_SHOW).forEach(function(r) {
+      var p    = r.imported;
+      var name = [p.firstName, p.lastName].filter(Boolean).join(' ') || '(no name)';
+      var meta = [];
+      if (p.nhi)                   meta.push('NHI: ' + p.nhi);
+      if (isSurg && p.smo)         meta.push(p.smo);
+      else if (!isSurg && p.ward)  meta.push(p.ward);
+      if (p.bed)                   meta.push('Bed ' + p.bed);
+      var diffText = r.diffs.length
+        ? r.diffs.map(function(d) { return h(d); }).join(' &middot; ')
+        : '<span class="import-diff-nochange">No demographic changes</span>';
+      html += '<div class="import-preview-item">' +
+        '<div class="import-preview-row">' +
+          '<span class="import-badge import-badge-update">update</span>' +
+          '<span class="import-preview-name">' + h(name) + '</span>' +
+          '<span class="import-preview-meta">' + h(meta.join(' · ')) + '</span>' +
+        '</div>' +
+        '<div class="import-diff-lines">' + diffText + '</div>' +
+      '</div>';
+    });
+    if (updateRows.length > MAX_SHOW) {
+      html += '<div class="import-preview-more">and ' + (updateRows.length - MAX_SHOW) + ' more&hellip;</div>';
+    }
   }
 
-  const existing = patients.length;
-  let html = _pendingImport.slice(0, MAX_PREVIEW).map(p => {
-    const name  = [p.firstName, p.lastName].filter(Boolean).join(' ') || '(no name)';
-    const parts = [];
-    if (p.nhi)  parts.push('NHI: ' + p.nhi);
-    if (p.ward) parts.push(p.ward);
-    if (p.bed)  parts.push('Bed ' + p.bed);
-    return '<div class="import-preview-item"><span class="import-preview-name">' + h(name) + '</span>' +
-      '<span class="import-preview-meta">' + h(parts.join(' · ')) + '</span></div>';
-  }).join('');
-  if (count > MAX_PREVIEW) html += '<div class="import-preview-more">and ' + (count - MAX_PREVIEW) + ' more&hellip;</div>';
+  if (newRows.length) {
+    html += '<div class="import-preview-section-hdr"><span>New patients &mdash; ' + newRows.length + '</span></div>';
+    newRows.slice(0, MAX_SHOW).forEach(function(p) {
+      var name = [p.firstName, p.lastName].filter(Boolean).join(' ') || '(no name)';
+      var meta = [];
+      if (p.nhi)                   meta.push('NHI: ' + p.nhi);
+      if (isSurg && p.smo)         meta.push(p.smo);
+      else if (!isSurg && p.ward)  meta.push(p.ward);
+      if (p.bed)                   meta.push('Bed ' + p.bed);
+      if (isSurg) {
+        var autoTeam = teams.find(function(t) { return t.id === p._autoTeam; });
+        if (autoTeam) meta.push('→ ' + autoTeam.name);
+      }
+      html += '<div class="import-preview-item">' +
+        '<div class="import-preview-row">' +
+          '<span class="import-badge import-badge-new">new</span>' +
+          '<span class="import-preview-name">' + h(name) + '</span>' +
+          '<span class="import-preview-meta">' + h(meta.join(' · ')) + '</span>' +
+        '</div>' +
+      '</div>';
+    });
+    if (newRows.length > MAX_SHOW) {
+      html += '<div class="import-preview-more">and ' + (newRows.length - MAX_SHOW) + ' more&hellip;</div>';
+    }
+  }
+
   document.getElementById('importPreviewList').innerHTML = html;
-  document.getElementById('importAddBtn').textContent =
-    'Add to existing' + (existing ? ' (' + existing + ' patient' + (existing !== 1 ? 's' : '') + ')' : '');
-  document.getElementById('importReplaceBtn').textContent =
-    existing ? 'Replace all ' + existing + ' patient' + (existing !== 1 ? 's' : '') : 'Import as new list';
-  const _xNHIs = new Set(patients.filter(p => p.nhi).map(p => p.nhi.trim().toUpperCase()));
-  const _dupCnt = _pendingImport.filter(p => p.nhi && _xNHIs.has(p.nhi.trim().toUpperCase())).length;
-  const _dupNoteEl = document.getElementById('importDupNote');
-  if (_dupNoteEl) _dupNoteEl.innerHTML = _dupCnt > 0
-    ? '<div class="import-dup-note">⚠ ' + _dupCnt + ' patient' + (_dupCnt !== 1 ? 's' : '') + ' will be skipped when adding to existing (duplicate NHI)</div>'
-    : '';
+
+  var noteEl = document.getElementById('importDupNote');
+  if (noteEl) {
+    noteEl.innerHTML = updateRows.length
+      ? '<div class="import-update-note">Matched patients will have demographics refreshed only — clinical notes, POD, and op date will not be changed.</div>'
+      : '';
+  }
+
+  // Button labels
+  var addLabel;
+  if (updateRows.length && newRows.length) {
+    addLabel = 'Update ' + updateRows.length + ' + add ' + newRows.length;
+  } else if (updateRows.length) {
+    addLabel = 'Update demographics (' + updateRows.length + ')';
+  } else {
+    addLabel = 'Import all (' + newRows.length + ')';
+  }
+  document.getElementById('importAddBtn').textContent = addLabel;
+
+  if (isSurg) {
+    var affectedTeamIds = new Set(_pendingImport.map(function(p) { return p._autoTeam || currentTeam; }).filter(Boolean));
+    var existingCount = Array.from(affectedTeamIds).reduce(function(s, tid) { return s + (allPatients[tid] || []).length; }, 0);
+    document.getElementById('importReplaceBtn').textContent =
+      existingCount ? 'Replace all (' + existingCount + ' existing)' : 'Import as new list';
+  } else {
+    var existing = patients.length;
+    document.getElementById('importReplaceBtn').textContent =
+      existing ? 'Replace all ' + existing + ' patient' + (existing !== 1 ? 's' : '') : 'Import as new list';
+  }
+
   document.getElementById('importModal').classList.add('open');
 }
 
@@ -161,69 +259,110 @@ function handleImportOverlayClick(e) {
 }
 
 function doImport(replace) {
-  if (compartment === 'surgical') {
-    const groups = {};
-    _pendingImport.forEach(p => {
-      const tid = p._autoTeam || currentTeam;
-      if (!groups[tid]) groups[tid] = [];
-      groups[tid].push(p);
-    });
+  var isSurg = compartment === 'surgical';
+
+  if (isSurg) {
     if (replace) {
-      Object.keys(groups).forEach(tid => {
-        const existing = allPatients[tid] || [];
+      var groups = {};
+      _pendingImport.forEach(function(p) {
+        var tid = p._autoTeam || currentTeam;
+        if (!groups[tid]) groups[tid] = [];
+        groups[tid].push(p);
+      });
+      Object.keys(groups).forEach(function(tid) {
+        var existing = allPatients[tid] || [];
         if (existing.length) {
           pushUndo({ type: 'clear_all', patients: deepClone(existing), teamId: tid, desc: 'replaced surgical patients' });
-          existing.forEach(p => deletePatientFromServer(p.pid, tid));
+          existing.forEach(function(p) { deletePatientFromServer(p.pid, tid); });
           allPatients[tid] = [];
         }
       });
-    } else {
-      Object.keys(groups).forEach(tid => {
-        const nhis = new Set((allPatients[tid] || []).filter(p => p.nhi).map(p => p.nhi.trim().toUpperCase()));
-        groups[tid] = groups[tid].filter(p => !p.nhi || !nhis.has(p.nhi.trim().toUpperCase()));
+      var total = 0;
+      Object.entries(groups).forEach(function([tid, pts]) {
+        if (!allPatients[tid]) allPatients[tid] = [];
+        pts.forEach(function(p) {
+          var newP = Object.assign({}, p, { pid: newPid(), teamId: tid });
+          delete newP._autoTeam;
+          allPatients[tid].unshift(newP);
+          savePatient(newP.pid);
+          total++;
+        });
+        stampTeamEdit(tid);
       });
+      patients = getTeamPatients(currentTeam);
+      render(); closeImportModal(); checkDuplicates();
+      showToast(total + ' patient' + (total !== 1 ? 's' : '') + ' imported');
+      return;
     }
-    let total = 0;
-    Object.entries(groups).forEach(([tid, pts]) => {
+
+    // Surgical smart merge: update demographics for NHI matches, create new for others
+    var nhiMap = _buildCsvNhiMap(true);
+    var updatedCount = 0, addedCount = 0;
+    var toAdd = {};
+    _pendingImport.forEach(function(p) {
+      if (p.nhi && nhiMap[p.nhi]) {
+        _csvApplyDemoUpdate(nhiMap[p.nhi], p, true);
+        updatedCount++;
+      } else {
+        var tid = p._autoTeam || currentTeam;
+        if (!toAdd[tid]) toAdd[tid] = [];
+        toAdd[tid].push(p);
+      }
+    });
+    Object.entries(toAdd).forEach(function([tid, pts]) {
       if (!allPatients[tid]) allPatients[tid] = [];
-      pts.forEach(p => {
-        const newP = { ...p, pid: newPid(), teamId: tid };
+      pts.forEach(function(p) {
+        var newP = Object.assign({}, p, { pid: newPid(), teamId: tid });
         delete newP._autoTeam;
         allPatients[tid].unshift(newP);
         savePatient(newP.pid);
-        total++;
+        addedCount++;
       });
       stampTeamEdit(tid);
     });
     patients = getTeamPatients(currentTeam);
     render(); closeImportModal(); checkDuplicates();
-    showToast(total + ' patient' + (total !== 1 ? 's' : '') + ' imported');
+    var parts = [];
+    if (updatedCount) parts.push(updatedCount + ' updated');
+    if (addedCount)   parts.push(addedCount + ' added');
+    showToast(parts.join(', ') || 'No changes');
     return;
   }
 
-  let skipped = [];
+  // Medical
   if (replace) {
-    const saved = deepClone(patients);
+    var saved = deepClone(patients);
     pushUndo({ type: 'clear_all', patients: saved, teamId: currentTeam, desc: 'replaced all patients' });
-    (allPatients[currentTeam] || []).forEach(p => deletePatientFromServer(p.pid, currentTeam));
+    (allPatients[currentTeam] || []).forEach(function(p) { deletePatientFromServer(p.pid, currentTeam); });
     allPatients[currentTeam] = [];
     patients = allPatients[currentTeam];
-  } else {
-    const existingNHIs = new Set(patients.filter(p => p.nhi).map(p => p.nhi.trim().toUpperCase()));
-    skipped = _pendingImport.filter(p => p.nhi && existingNHIs.has(p.nhi.trim().toUpperCase()));
-    if (skipped.length > 0) {
-      _pendingImport = _pendingImport.filter(p => !p.nhi || !existingNHIs.has(p.nhi.trim().toUpperCase()));
+    _pendingImport.forEach(function(p) { p.pid = newPid(); p.teamId = currentTeam; savePatient(p.pid); });
+    patients.unshift.apply(patients, _pendingImport);
+    render(); closeImportModal(); checkDuplicates();
+    showToast(_pendingImport.length + ' patient' + (_pendingImport.length !== 1 ? 's' : '') + ' imported');
+    return;
+  }
+
+  // Medical smart merge: update demographics for NHI matches, create new for others
+  var nhiMap = _buildCsvNhiMap(false);
+  var updatedCount = 0, addedCount = 0;
+  _pendingImport.forEach(function(p) {
+    if (p.nhi && nhiMap[p.nhi]) {
+      _csvApplyDemoUpdate(nhiMap[p.nhi], p, false);
+      updatedCount++;
+    } else {
+      p.pid = newPid(); p.teamId = currentTeam;
+      savePatient(p.pid);
+      patients.unshift(p);
+      addedCount++;
     }
-  }
-  const imported = _pendingImport.map(p => { p.pid = newPid(); p.teamId = currentTeam; return p; });
-  imported.forEach(p => savePatient(p.pid));
-  patients.unshift(...imported);
-  render(); closeImportModal();
-  checkDuplicates();
-  if (skipped.length > 0) {
-    const names = skipped.map(p => [p.firstName, p.lastName].filter(Boolean).join(' ') || p.nhi).join(', ');
-    showToast(skipped.length + ' skipped (duplicate NHI): ' + trunc(names, 50));
-  }
+  });
+  if (updatedCount || addedCount) stampTeamEdit(currentTeam);
+  render(); closeImportModal(); checkDuplicates();
+  var parts = [];
+  if (updatedCount) parts.push(updatedCount + ' updated');
+  if (addedCount)   parts.push(addedCount + ' added');
+  showToast(parts.join(', ') || 'No changes');
 }
 
 function openReplaceConfirmModal() {

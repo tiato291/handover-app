@@ -524,13 +524,27 @@ body.view-mode .edit-only-item { display: none !important; }
   margin: 12px 0 4px;
 }
 .import-preview-item {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
-  padding: 5px 4px; border-radius: 5px; font-size: 12.5px;
+  display: block;
+  padding: 4px 4px; border-radius: 5px; font-size: 12.5px;
 }
 .import-preview-item:hover { background: rgba(42,92,138,0.06); }
+.import-preview-row { display: flex; align-items: baseline; gap: 6px; }
 .import-preview-name { font-weight: 600; color: var(--text); white-space: nowrap; }
-.import-preview-meta { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.import-preview-meta { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
 .import-preview-more { text-align: center; color: var(--muted); font-size: 11px; padding: 6px 0 2px; }
+.import-badge {
+  font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+  border-radius: 4px; padding: 1px 5px; white-space: nowrap; flex-shrink: 0;
+}
+.import-badge-update { background: var(--pri-lite); color: var(--pri); }
+.import-badge-new    { background: #dcfce7; color: #15803d; }
+body.dark-mode .import-badge-new { background: rgba(74,222,128,0.12); color: #4ade80; }
+.import-diff-lines {
+  padding-left: 34px; margin-top: 1px;
+  font-size: 11px; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.import-diff-nochange { font-style: italic; }
 .import-preview-section-hdr {
   display: flex; align-items: center; justify-content: space-between;
   font-size: 11px; font-weight: 700; text-transform: uppercase;
@@ -771,6 +785,12 @@ body.view-mode .edit-only-item { display: none !important; }
   padding: 8px 12px; margin-top: 8px;
 }
 body.dark-mode .import-dup-note { color: #fbbf24; background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.3); }
+.import-update-note {
+  font-size: 12px; color: #1e40af; background: #eff6ff;
+  border: 1px solid #bfdbfe; border-radius: 6px;
+  padding: 8px 12px; margin-top: 8px;
+}
+body.dark-mode .import-update-note { color: #93c5fd; background: rgba(147,197,253,0.08); border-color: rgba(147,197,253,0.3); }
 
 /* ---- DARK MODE BUTTON (half-circle icon) ---- */
 .btn-halfcircle {
