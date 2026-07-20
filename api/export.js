@@ -1,9 +1,10 @@
 'use strict';
-const supabase                 = require('../lib/supabase');
-const { verifySession }        = require('../lib/auth');
+const supabase                  = require('../lib/supabase');
+const { verifySession }         = require('../lib/auth');
 const { buildHandoverWorkbook } = require('../lib/handoverWorkbook');
+const { buildSurgWorkbook }     = require('../lib/surgWorkbook');
 
-const PT_PREFIX = 'pt:';
+const PT_PREFIX     = 'pt:';
 const WARD_PRIORITY = ['CCU', 'Pediatrics', 'AT&R', 'Medical', 'Surgical'];
 
 function wardRank(ward) {
@@ -18,7 +19,9 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const team = req.query && req.query.team;
+  const team       = req.query && req.query.team;
+  const isSurgical = req.query && req.query.compartment === 'surgical';
+  const teamName   = req.query && req.query.teamName;
 
   const { data: patientRows, error } = await supabase
     .from('store')
@@ -32,11 +35,23 @@ module.exports = async function handler(req, res) {
 
   let patients = (patientRows || []).map(r => r.value).filter(Boolean);
   if (team) patients = patients.filter(p => p.teamId === team);
-  patients.sort((a, b) => wardRank(a.ward) - wardRank(b.ward));
 
-  const buffer = await buildHandoverWorkbook(patients);
-  const scope = (team || 'all-teams').replace(/\s+/g, '-').toLowerCase();
-  const filename = 'handover-' + scope + '-' + new Date().toISOString().slice(0, 10) + '.xlsx';
+  const date = new Date().toISOString().slice(0, 10);
+  let buffer, filename;
+
+  if (isSurgical) {
+    patients.sort((a, b) =>
+      (a.smo || '').localeCompare(b.smo || '') || (a.bed || '').localeCompare(b.bed || '')
+    );
+    buffer = await buildSurgWorkbook(patients);
+    const slug = (teamName || team || 'all').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    filename = 'Surg-Handover-' + slug + '-' + date + '.xlsx';
+  } else {
+    patients.sort((a, b) => wardRank(a.ward) - wardRank(b.ward));
+    buffer = await buildHandoverWorkbook(patients);
+    const scope = (team || 'all-teams').replace(/\s+/g, '-').toLowerCase();
+    filename = 'handover-' + scope + '-' + date + '.xlsx';
+  }
 
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');

@@ -1019,6 +1019,60 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
     text-align: center;
     font-size: 12px;
   }
+  .cmp-btn { padding: 3px 7px; font-size: 10px; }
+  .surg-field-grid { grid-template-columns: 1fr; }
+}
+
+/* ================================================================
+   COMPARTMENT TOGGLE
+   ================================================================ */
+.compartment-toggle {
+  display: inline-flex;
+  background: rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.cmp-btn {
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.65);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.cmp-btn.active {
+  background: rgba(255,255,255,0.92);
+  color: var(--pri);
+}
+.cmp-btn:not(.active):hover {
+  background: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.95);
+}
+
+/* ================================================================
+   SURGICAL CARD
+   ================================================================ */
+.surg-loc-group {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.surg-doa-inp  { max-width: 7ch; }
+.surg-pod-inp  { width: 4ch; max-width: 5ch; }
+.surg-smo-sel,
+.surg-smo-inp  { max-width: 14ch; }
+.surg-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 </style>
 </head>
@@ -1026,11 +1080,15 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
 
 <header class="app-bar">
   <div class="bar-left">
-    <div class="bar-title">General Medicine &mdash; Patient Handover</div>
+    <div class="bar-title" id="barTitle">General Medicine &mdash; Patient Handover</div>
     <div class="bar-sub"><span id="barDate"></span><span id="lastUpdated" style="margin-left:10px;opacity:0.55"></span></div>
   </div>
   <div id="teamTabs" class="team-tabs"></div>
   <div class="bar-right">
+    <div class="compartment-toggle">
+      <button class="cmp-btn active" id="cmpMed"  onclick="switchCompartment('medical')">Med</button>
+      <button class="cmp-btn"        id="cmpSurg" onclick="switchCompartment('surgical')">Surg</button>
+    </div>
     <button class="btn-halfcircle" id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle dark/light mode" aria-label="Toggle dark mode">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
@@ -1078,12 +1136,12 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
           </svg>
           Import CSV
         </button>
-        <button class="hdr-menu-item" onclick="exportHandoverSheet();closeHeaderMenu()">
+        <button class="hdr-menu-item" id="hdrExportItem" onclick="exportHandoverSheet();closeHeaderMenu()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          Export Handover Sheet
+          <span id="hdrExportLabel">Export Handover Sheet</span>
         </button>
         <button class="hdr-menu-item danger edit-only-item" onclick="openClearModal();closeHeaderMenu()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1106,13 +1164,16 @@ body.dark-mode .team-tab.active { background: #e2e8f0; color: #0f172a; }
 </header>
 
 <div class="filter-bar">
-  <div class="filter-left">
+  <div class="filter-left" id="medFilterLeft">
     <span class="filter-lbl">Coverage</span>
     <button class="filter-btn active" data-filter="All"           onclick="setFilter('All')">All</button>
     <button class="filter-btn"        data-filter="SMO Review"    onclick="setFilter('SMO Review')">SMO Review</button>
     <button class="filter-btn"        data-filter="RMO Review"    onclick="setFilter('RMO Review')">RMO Review</button>
     <button class="filter-btn"        data-filter="Results Chase" onclick="setFilter('Results Chase')">Results Chase</button>
     <button class="filter-btn"        data-filter="No Review"     onclick="setFilter('No Review')">No Review</button>
+  </div>
+  <div class="filter-left" id="surgFilterLeft" style="display:none">
+    <!-- rendered by renderFilterBar() when in surgical compartment -->
   </div>
   <div class="filter-right">
     <input type="search" id="searchInp" class="search-inp no-print" placeholder="Search name or NHI…" oninput="setSearch(this.value)" autocomplete="off">
@@ -1316,9 +1377,13 @@ const MONTHS = ['January','February','March','April','May','June',
 let allPatients   = {};   // { teamId: [patient, ...] }
 let patients      = [];   // reference to allPatients[currentTeam]
 let teams         = [];
-let currentTeam   = localStorage.getItem('gm_cur_team') || 'team1';
-let currentFilter = 'All';
-let currentSort   = 'default';
+let currentTeam     = localStorage.getItem('gm_cur_team') || 'team1';
+let compartment     = localStorage.getItem('gm_compartment') || 'medical';
+let currentSurgTeam = localStorage.getItem('gm_cur_surg_team') || 'surg_boo';
+if (compartment === 'surgical') currentTeam = currentSurgTeam;
+let surgConsFilter  = 'All';
+let currentFilter   = 'All';
+let currentSort     = 'default';
 let editMode      = true;
 
 let undoStack        = [];    // max 10 steps
@@ -1359,12 +1424,24 @@ function getTeamPatients(teamId) {
 /* ---- TEAM DEFAULTS ---- */
 function defaultTeams() {
   return [
-    { id:'team1', name:'Team Red',           fixed:true },
-    { id:'team2', name:'Team Green',         fixed:true },
-    { id:'team3', name:'Team Blue',          fixed:true },
-    { id:'team4', name:'Team Yellow',        fixed:true },
-    { id:'team5', name:'Overnight Handover', fixed:true }
+    { id:'team1',    name:'Team Red',           fixed:true },
+    { id:'team2',    name:'Team Green',         fixed:true },
+    { id:'team3',    name:'Team Blue',          fixed:true },
+    { id:'team4',    name:'Team Yellow',        fixed:true },
+    { id:'team5',    name:'Overnight Handover', fixed:true },
+    { id:'surg_boo', name:'BOO',  compartment:'surgical', consultants:["Bonnet","O'Grady","Omar"],          fixed:true },
+    { id:'surg_lash',name:'LASH', compartment:'surgical', consultants:['Lill','Howley','Aiono','Skavysh'], fixed:true },
   ];
+}
+
+/* ---- COMPARTMENT HELPERS ---- */
+function teamBelongsTo(t, comp) {
+  return comp === 'surgical' ? t.compartment === 'surgical' : t.compartment !== 'surgical';
+}
+
+function getTeamConsultants(teamId) {
+  const t = teams.find(x => x.id === teamId);
+  return (t && t.consultants) || [];
 }
 
 /* ---- SAVE FUNCTIONS ---- */
@@ -1423,16 +1500,30 @@ async function saveTeams() {
 /* ---- NORMALIZATION ---- */
 function normalizePatients() {
   patients.forEach(p => {
-    if (Array.isArray(p.coverage)) p.coverage = p.coverage[0] || '';
-    else if (p.coverage == null)   p.coverage = '';
-    if (p.sgoc        === undefined) p.sgoc        = '';
-    if (p.sgocNote    === undefined) p.sgocNote    = '';
-    if (p.age         === undefined) p.age         = '';
-    if (p.gender      === undefined) p.gender      = '';
-    if (p.genderOther === undefined) p.genderOther = '';
-    if (!p.ward)     p.ward     = 'Medical';
-    if (!p.jobs)     p.jobs     = [];
-    if (!p.coverage) p.coverage = 'No Review';
+    if (p.compartment === 'surgical') {
+      if (p.problemList === undefined) p.problemList = '';
+      if (p.background  === undefined) p.background  = '';
+      if (p.results     === undefined) p.results     = '';
+      if (p.plan        === undefined) p.plan        = '';
+      if (p.smo         === undefined) p.smo         = '';
+      if (p.doa         === undefined) p.doa         = '';
+      if (p.pod         === undefined) p.pod         = '';
+      if (p.title       === undefined) p.title       = '';
+      if (p.age         === undefined) p.age         = '';
+      if (p.gender      === undefined) p.gender      = '';
+      if (!p.ward)                     p.ward        = 'Surgical';
+    } else {
+      if (Array.isArray(p.coverage)) p.coverage = p.coverage[0] || '';
+      else if (p.coverage == null)   p.coverage = '';
+      if (p.sgoc        === undefined) p.sgoc        = '';
+      if (p.sgocNote    === undefined) p.sgocNote    = '';
+      if (p.age         === undefined) p.age         = '';
+      if (p.gender      === undefined) p.gender      = '';
+      if (p.genderOther === undefined) p.genderOther = '';
+      if (!p.ward)     p.ward     = 'Medical';
+      if (!p.jobs)     p.jobs     = [];
+      if (!p.coverage) p.coverage = 'No Review';
+    }
   });
 }
 
@@ -1468,9 +1559,15 @@ async function loadFromServer() {
       return;
     }
 
-    if (!teams.find(t => t.id === currentTeam)) {
-      currentTeam = 'team1';
-      localStorage.setItem('gm_cur_team', 'team1');
+    if (!teams.find(t => t.id === currentTeam && teamBelongsTo(t, compartment))) {
+      const fallback = teams.find(t => teamBelongsTo(t, compartment));
+      if (compartment === 'surgical') {
+        currentTeam = currentSurgTeam = (fallback || {}).id || 'surg_boo';
+        localStorage.setItem('gm_cur_surg_team', currentTeam);
+      } else {
+        currentTeam = (fallback || {}).id || 'team1';
+        localStorage.setItem('gm_cur_team', currentTeam);
+      }
     }
     patients = getTeamPatients(currentTeam);
     normalizePatients();
@@ -1552,6 +1649,7 @@ async function doAutoRefresh() {
     normalizePatients();
     updateLastUpdatedText();
     renderTeamTabs();
+    renderFilterBar();
     render();
     checkDuplicates();
   } catch(e) { /* network blip */ }
@@ -1560,7 +1658,7 @@ async function doAutoRefresh() {
 /* ---- TEAM TABS ---- */
 function renderTeamTabs() {
   const container = document.getElementById('teamTabs');
-  let html = teams.map(t => {
+  let html = teams.filter(t => teamBelongsTo(t, compartment)).map(t => {
     const isActive  = t.id === currentTeam;
     const isDynamic = !t.fixed;
     const count     = (allPatients[t.id] || []).length;
@@ -1612,8 +1710,10 @@ function startRename(btn, tid) {
 function createTeam() {
   const name = prompt('New team name:');
   if (!name || !name.trim()) return;
-  const id = 'dyn_' + Date.now();
-  teams.push({ id, name: name.trim(), fixed: false });
+  const id = (compartment === 'surgical' ? 'surg_' : 'med_') + Date.now();
+  const t = { id, name: name.trim(), fixed: false };
+  if (compartment === 'surgical') t.compartment = 'surgical';
+  teams.push(t);
   saveTeams();
   switchTeam(id);
 }
@@ -1627,9 +1727,16 @@ function deleteTeam(tid) {
   teams = teams.filter(t => t.id !== tid);
   saveTeams();
   if (currentTeam === tid) {
-    currentTeam = 'team1';
-    localStorage.setItem('gm_cur_team', 'team1');
-    patients = getTeamPatients('team1');
+    const compTeams = teams.filter(t => teamBelongsTo(t, compartment));
+    const fallback = (compTeams[0] || {}).id || (compartment === 'surgical' ? 'surg_boo' : 'team1');
+    currentTeam = fallback;
+    if (compartment === 'surgical') {
+      currentSurgTeam = fallback;
+      localStorage.setItem('gm_cur_surg_team', fallback);
+    } else {
+      localStorage.setItem('gm_cur_team', fallback);
+    }
+    patients = getTeamPatients(fallback);
   }
   renderTeamTabs(); render();
 }
@@ -1638,12 +1745,19 @@ function switchTeam(tid) {
   if (!teams.find(t => t.id === tid)) return;
   currentTeam   = tid;
   currentFilter = 'All';
-  localStorage.setItem('gm_cur_team', tid);
+  surgConsFilter = 'All';
+  if (compartment === 'surgical') {
+    currentSurgTeam = tid;
+    localStorage.setItem('gm_cur_surg_team', tid);
+  } else {
+    localStorage.setItem('gm_cur_team', tid);
+  }
   updateLastUpdatedText();
   patients = getTeamPatients(currentTeam);
   normalizePatients();
   renderTeamTabs();
-  document.querySelectorAll('.filter-btn').forEach(b => {
+  renderFilterBar();
+  document.querySelectorAll('#medFilterLeft .filter-btn').forEach(b => {
     b.className = 'filter-btn' + (b.dataset.filter === 'All' ? ' active' : '');
   });
   render();
@@ -1653,14 +1767,16 @@ function switchTeam(tid) {
 /* ---- FILTER / SORT ---- */
 function setFilter(f) {
   currentFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b => {
+  document.querySelectorAll('#medFilterLeft .filter-btn').forEach(b => {
     b.className = 'filter-btn' + (b.dataset.filter === f ? ' active' : '');
   });
   render();
 }
 
 function getFiltered() {
-  let list = currentFilter === 'All' ? patients : patients.filter(p => p.coverage === currentFilter);
+  let list = compartment === 'surgical'
+    ? (surgConsFilter === 'All' ? patients : patients.filter(p => p.smo === surgConsFilter))
+    : (currentFilter  === 'All' ? patients : patients.filter(p => p.coverage === currentFilter));
   if (searchQuery) {
     const q = searchQuery;
     list = list.filter(p => {
@@ -1675,7 +1791,8 @@ function updateCount() {
   const total    = patients.length;
   const filtered = getFiltered().length;
   let txt;
-  if (currentFilter === 'All') {
+  const isAll = compartment === 'surgical' ? surgConsFilter === 'All' : currentFilter === 'All';
+  if (isAll) {
     txt = total === 0 ? '' : total === 1 ? '1 patient' : total + ' patients';
   } else {
     txt = filtered + ' of ' + total + ' patient' + (total !== 1 ? 's' : '');
@@ -1693,8 +1810,9 @@ function doPrint() {
   const scope   = currentFilter === 'All'
     ? total + ' patient' + (total !== 1 ? 's' : '')
     : h(currentFilter) + ' only — ' + shown + ' of ' + total + ' patients';
+  const printTitle = compartment === 'surgical' ? 'Surgical — Patient Handover' : 'General Medicine — Patient Handover';
   document.getElementById('printHeader').innerHTML =
-    '<div class="ph-top"><span class="ph-title">General Medicine — Patient Handover</span><span class="ph-team">' + h(team.name) + '</span></div>' +
+    '<div class="ph-top"><span class="ph-title">' + printTitle + '</span><span class="ph-team">' + h(team.name) + '</span></div>' +
     '<div class="ph-meta"><span>' + dateStr + '</span><span>' + scope + '</span></div>' +
     '<hr class="ph-rule">';
   window.print();
@@ -1702,6 +1820,26 @@ function doPrint() {
 
 /* ---- PATIENTS ---- */
 function addPatient() {
+  if (compartment === 'surgical') {
+    const consultants = getTeamConsultants(currentTeam);
+    const p = {
+      pid: newPid(), teamId: currentTeam, compartment: 'surgical',
+      firstName:'', lastName:'', age:'', gender:'', genderOther:'', title:'', nhi:'',
+      ward:'Surgical', bed:'',
+      smo: consultants[0] || '', doa:'', pod:'',
+      problemList:'', background:'', results:'', plan:'',
+    };
+    patients.unshift(p);
+    pushUndo({ type: 'add', pid: p.pid, teamId: currentTeam, desc: 'added surgical patient' });
+    savePatient(p.pid);
+    render();
+    checkDuplicates();
+    setTimeout(() => {
+      const card = qpid(p.pid);
+      if (card) { const f = card.querySelector('.f-fn'); if (f) f.focus(); }
+    }, 40);
+    return;
+  }
   const p = {
     pid: newPid(), teamId: currentTeam,
     firstName:'', lastName:'', age:'', gender:'', genderOther:'', nhi:'', ward:'Medical', bed:'',
@@ -1972,7 +2110,7 @@ function openMoveModal(pid) {
   document.getElementById('movePtTitle').textContent = 'Move ' + name;
   const sel = document.getElementById('moveTeamSel');
   sel.innerHTML = '<option value="">— Select team —</option>' +
-    teams.filter(t => t.id !== currentTeam)
+    teams.filter(t => t.id !== currentTeam && teamBelongsTo(t, compartment))
       .map(t => '<option value="' + h(t.id) + '">' + h(t.name) + '</option>').join('');
   document.getElementById('moveStep1').style.display = '';
   document.getElementById('moveStep2').style.display = 'none';
@@ -2488,19 +2626,258 @@ function render() {
         '<p>Click <strong>Add Patient</strong> to begin the handover</p>' +
       '</div>';
   } else if (!toShow.length) {
+    const filterLabel = compartment === 'surgical'
+      ? h(surgConsFilter) + ' (consultant)'
+      : h(currentFilter) + ' coverage';
     grid.innerHTML =
       '<div class="empty">' +
         '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">' +
           '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>' +
         '</svg>' +
         '<h3>No patients match this filter</h3>' +
-        '<p>No patients have <strong>' + h(currentFilter) + '</strong> coverage selected.</p>' +
+        '<p>No patients match <strong>' + filterLabel + '</strong>.</p>' +
       '</div>';
   } else {
-    grid.innerHTML = toShow.map(p => cardHTML(p)).join('');
+    grid.innerHTML = toShow.map(p => p.compartment === 'surgical' ? surgCardHTML(p) : cardHTML(p)).join('');
   }
   updateCount();
   setTimeout(() => document.querySelectorAll('textarea').forEach(autoH), 10);
+}
+
+/* ================================================================
+   SURGICAL COMPARTMENT
+   ================================================================ */
+
+function switchCompartment(comp) {
+  if (compartment === comp) return;
+  if (compartment === 'surgical') {
+    currentSurgTeam = currentTeam;
+    localStorage.setItem('gm_cur_surg_team', currentSurgTeam);
+  } else {
+    localStorage.setItem('gm_cur_team', currentTeam);
+  }
+  compartment = comp;
+  localStorage.setItem('gm_compartment', comp);
+  surgConsFilter = 'All';
+  currentFilter  = 'All';
+  if (comp === 'surgical') {
+    currentTeam = currentSurgTeam;
+    if (!teams.find(t => t.id === currentTeam && teamBelongsTo(t, 'surgical'))) {
+      currentTeam = currentSurgTeam = (teams.find(t => teamBelongsTo(t, 'surgical')) || {}).id || 'surg_boo';
+    }
+  } else {
+    currentTeam = localStorage.getItem('gm_cur_team') || 'team1';
+    if (!teams.find(t => t.id === currentTeam && teamBelongsTo(t, 'medical'))) {
+      currentTeam = (teams.find(t => teamBelongsTo(t, 'medical')) || {}).id || 'team1';
+    }
+  }
+  patients = getTeamPatients(currentTeam);
+  normalizePatients();
+  updateCompartmentUI();
+  renderTeamTabs();
+  renderFilterBar();
+  render();
+  checkDuplicates();
+  updateLastUpdatedText();
+}
+
+function updateCompartmentUI() {
+  const medBtn  = document.getElementById('cmpMed');
+  const surgBtn = document.getElementById('cmpSurg');
+  if (medBtn)  medBtn.classList.toggle('active',  compartment === 'medical');
+  if (surgBtn) surgBtn.classList.toggle('active', compartment === 'surgical');
+  const titleEl = document.getElementById('barTitle');
+  if (titleEl) titleEl.innerHTML = compartment === 'surgical'
+    ? 'Surgical &mdash; Patient Handover'
+    : 'General Medicine &mdash; Patient Handover';
+  const exportLbl = document.getElementById('hdrExportLabel');
+  if (exportLbl) exportLbl.textContent = compartment === 'surgical'
+    ? 'Export Surgical Sheet (.xlsx)'
+    : 'Export Handover Sheet (.xlsx)';
+}
+
+function renderFilterBar() {
+  const medFL  = document.getElementById('medFilterLeft');
+  const surgFL = document.getElementById('surgFilterLeft');
+  if (compartment === 'surgical') {
+    if (medFL)  medFL.style.display  = 'none';
+    if (surgFL) {
+      surgFL.style.display = '';
+      const consultants = getTeamConsultants(currentTeam);
+      const opts = ['All', ...consultants];
+      surgFL.innerHTML = '<span class="filter-lbl">Consultant</span>' +
+        opts.map(c =>
+          '<button class="filter-btn' + (surgConsFilter === c ? ' active' : '') + '"' +
+          ' onclick="setSurgFilter(\'' + h(c) + '\')">' + h(c) + '</button>'
+        ).join('');
+    }
+  } else {
+    if (medFL)  medFL.style.display  = '';
+    if (surgFL) surgFL.style.display = 'none';
+  }
+}
+
+function setSurgFilter(consultant) {
+  surgConsFilter = consultant;
+  renderFilterBar();
+  render();
+}
+
+function surgCardHTML(p) {
+  const pid = p.pid;
+  const consultants = getTeamConsultants(p.teamId);
+  const smoOptions = consultants.slice();
+  if (p.smo && !smoOptions.includes(p.smo)) smoOptions.push(p.smo);
+  const smoField = smoOptions.length
+    ? '<select class="hdr-sel surg-smo-sel" onchange="setField(\'' + pid + '\',\'smo\',this.value)">' +
+        '<option value="">—</option>' +
+        smoOptions.map(c => '<option value="' + h(c) + '"' + (p.smo === c ? ' selected' : '') + '>' + h(c) + '</option>').join('') +
+      '</select>'
+    : '<input class="hdr-inp surg-smo-inp" type="text" value="' + h(p.smo || '') + '" placeholder="—"' +
+        ' oninput="setField(\'' + pid + '\',\'smo\',this.value)">';
+  return (
+    '<div class="card" data-pid="' + pid + '">' +
+    '<div class="card-top">' +
+      '<div class="card-top-left">' +
+        '<div class="pt-hdr-grid">' +
+          '<input class="hdr-inp hdr-name-inp f-fn" type="text" value="' + h(p.firstName) + '" placeholder="First name"' +
+            ' oninput="setField(\'' + pid + '\',\'firstName\',this.value)" onblur="checkDuplicates()">' +
+          '<div class="hdr-row1-rest">' +
+            '<input class="hdr-inp hdr-name-inp" type="text" value="' + h(p.lastName) + '" placeholder="Last name"' +
+              ' oninput="setField(\'' + pid + '\',\'lastName\',this.value)" onblur="checkDuplicates()">' +
+            '<span class="hdr-demog-sep">|</span>' +
+            '<input class="hdr-inp hdr-age-inp" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="' + h(p.age) + '" placeholder="Age"' +
+              ' oninput="this.value=this.value.replace(/[^0-9]/g,\'\');setField(\'' + pid + '\',\'age\',this.value)">' +
+            '<select class="hdr-sel hdr-gender-sel" onchange="setField(\'' + pid + '\',\'gender\',this.value)">' +
+              '<option value="">Gender</option>' +
+              '<option value="M"' + (p.gender === 'M' ? ' selected' : '') + '>Male</option>' +
+              '<option value="F"' + (p.gender === 'F' ? ' selected' : '') + '>Female</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="hdr-nhi-cell">' +
+            '<span class="hdr-meta-lbl">NHI</span>' +
+            '<input class="hdr-inp hdr-nhi-inp" type="text" value="' + h(p.nhi) + '" placeholder="—" maxlength="8"' +
+              ' oninput="this.value=this.value.toUpperCase();setField(\'' + pid + '\',\'nhi\',this.value)"' +
+              ' onblur="checkDuplicates()">' +
+          '</div>' +
+          '<div class="surg-loc-group">' +
+            '<span class="hdr-meta-lbl">Bed</span>' +
+            '<input class="hdr-inp hdr-bed-inp" type="text" value="' + h(p.bed) + '" placeholder="—"' +
+              ' oninput="setField(\'' + pid + '\',\'bed\',this.value)">' +
+            '<span class="hdr-demog-sep">&middot;</span>' +
+            '<span class="hdr-meta-lbl">SMO</span>' +
+            smoField +
+            '<span class="hdr-demog-sep">&middot;</span>' +
+            '<span class="hdr-meta-lbl">DOA</span>' +
+            '<input class="hdr-inp surg-doa-inp" type="text" value="' + h(p.doa || '') + '" placeholder="—" maxlength="8"' +
+              ' oninput="setField(\'' + pid + '\',\'doa\',this.value)">' +
+            '<span class="hdr-demog-sep">&middot;</span>' +
+            '<span class="hdr-meta-lbl">POD</span>' +
+            '<input class="hdr-inp surg-pod-inp" type="text" inputmode="numeric" value="' + h(p.pod || '') + '" placeholder="—"' +
+              ' oninput="setField(\'' + pid + '\',\'pod\',this.value)">' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="pt-menu-wrap no-print">' +
+        '<button class="btn-pt-menu" onclick="togglePtMenu(event,\'' + pid + '\')" title="Options">&#8942;</button>' +
+        '<div class="pt-dropdown" id="pt-menu-' + pid + '" style="display:none">' +
+          '<button onclick="openMoveModal(\'' + pid + '\')">Move Patient</button>' +
+          '<button class="danger" onclick="openDeleteModal(\'' + pid + '\')">Delete Patient</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="card-body">' +
+      '<div class="surg-field-grid">' +
+        '<div class="f"><span class="lbl">Problem List</span>' +
+          '<textarea class="inp" rows="3" placeholder="Active problems..."' +
+          ' oninput="setField(\'' + pid + '\',\'problemList\',this.value);autoH(this)"' +
+          ' onfocus="autoH(this)">' + h(p.problemList || '') + '</textarea>' +
+        '</div>' +
+        '<div class="f"><span class="lbl">Background</span>' +
+          '<textarea class="inp" rows="3" placeholder="Past medical history, relevant background..."' +
+          ' oninput="setField(\'' + pid + '\',\'background\',this.value);autoH(this)"' +
+          ' onfocus="autoH(this)">' + h(p.background || '') + '</textarea>' +
+        '</div>' +
+        '<div class="f"><span class="lbl">Results</span>' +
+          '<textarea class="inp" rows="3" placeholder="Investigations, bloods, imaging..."' +
+          ' oninput="setField(\'' + pid + '\',\'results\',this.value);autoH(this)"' +
+          ' onfocus="autoH(this)">' + h(p.results || '') + '</textarea>' +
+        '</div>' +
+        '<div class="f"><span class="lbl">Plan</span>' +
+          '<textarea class="inp" rows="3" placeholder="Management plan, disposition..."' +
+          ' oninput="setField(\'' + pid + '\',\'plan\',this.value);autoH(this)"' +
+          ' onfocus="autoH(this)">' + h(p.plan || '') + '</textarea>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+/* ---- SURGICAL CSV IMPORT ---- */
+
+const SURG_CONSULTANTS = {
+  'bonnet':   { smo: 'Bonnet',   team: 'surg_boo'  },
+  "o'grady":  { smo: "O'Grady",  team: 'surg_boo'  },
+  'grady':    { smo: "O'Grady",  team: 'surg_boo'  },
+  'omar':     { smo: 'Omar',     team: 'surg_boo'  },
+  'lill':     { smo: 'Lill',     team: 'surg_lash' },
+  'howley':   { smo: 'Howley',   team: 'surg_lash' },
+  'aiono':    { smo: 'Aiono',    team: 'surg_lash' },
+  'skavysh':  { smo: 'Skavysh',  team: 'surg_lash' },
+};
+
+function parseSurgAdmissionDate(dateStr) {
+  if (!dateStr) return '';
+  const datePart = dateStr.split(' ')[0]; // "17-Jul-2026"
+  const parts = datePart.split('-');
+  if (parts.length < 3) return dateStr;
+  const [day, mon] = parts;
+  const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthNum = MONTHS_SHORT.indexOf(mon) + 1;
+  if (!monthNum) return dateStr;
+  return parseInt(day, 10) + '/' + monthNum; // "17/7"
+}
+
+function extractSurgeonSurname(clinician) {
+  if (!clinician) return '';
+  const words = clinician.trim().split(/\s+/);
+  return words[words.length - 1] || '';
+}
+
+function csvRowToSurgPatient(row) {
+  const sex = (row['sex'] || '').toUpperCase();
+  let gender = '';
+  if (sex === 'M' || sex === 'MALE')        gender = 'M';
+  else if (sex === 'F' || sex === 'FEMALE') gender = 'F';
+
+  const clinician = row['responsible clinician'] || '';
+  const surname   = extractSurgeonSurname(clinician);
+  const match     = SURG_CONSULTANTS[surname.toLowerCase()];
+  const smo       = match ? match.smo : surname;
+  const autoTeam  = match ? match.team : null;
+
+  return {
+    compartment: 'surgical',
+    firstName:   (row['given name']   || '').trim(),
+    lastName:    (row['family name']  || '').trim(),
+    middleName:  (row['middle name']  || '').trim(),
+    age:         (row['age']          || '').trim(),
+    gender,
+    genderOther: '',
+    title:       (row['prefix']       || '').trim(),
+    nhi:         (row['nhi']          || '').trim().toUpperCase(),
+    ward:        'Surgical',
+    bed:         (row['bed']          || '').trim(),
+    smo,
+    _autoTeam:   autoTeam,
+    doa:         parseSurgAdmissionDate(row['admission date'] || ''),
+    pod:         '',
+    problemList: '',
+    background:  '',
+    results:     '',
+    plan:        '',
+  };
 }
 
 /* ---- CSV IMPORT ---- */
@@ -2529,7 +2906,11 @@ function handleImportFile(input) {
     }
 
     const rows = parseCSV(text);
-    _pendingImport = rows.map(csvRowToPatient).filter(p => p.firstName || p.lastName || p.nhi);
+    if (compartment === 'surgical') {
+      _pendingImport = rows.map(csvRowToSurgPatient).filter(p => p.firstName || p.lastName || p.nhi);
+    } else {
+      _pendingImport = rows.map(csvRowToPatient).filter(p => p.firstName || p.lastName || p.nhi);
+    }
     if (!_pendingImport.length) {
       alert('No valid patient rows found in the CSV. Check that the file has the expected column headers.');
       return;
@@ -2597,10 +2978,37 @@ function csvRowToPatient(row) {
 }
 
 function showImportPreview() {
-  const count = _pendingImport.length, existing = patients.length;
+  const count = _pendingImport.length;
   document.getElementById('importStats').innerHTML =
     '<strong>' + count + ' patient' + (count !== 1 ? 's' : '') + '</strong> found in CSV';
   const MAX_PREVIEW = 10;
+
+  if (compartment === 'surgical') {
+    let html = _pendingImport.slice(0, MAX_PREVIEW).map(p => {
+      const name  = [p.firstName, p.lastName].filter(Boolean).join(' ') || '(no name)';
+      const parts = [];
+      if (p.nhi)  parts.push('NHI: ' + p.nhi);
+      if (p.bed)  parts.push('Bed ' + p.bed);
+      if (p.smo)  parts.push(p.smo);
+      const autoTeam = teams.find(t => t.id === p._autoTeam);
+      if (autoTeam) parts.push('→ ' + autoTeam.name);
+      return '<div class="import-preview-item"><span class="import-preview-name">' + h(name) + '</span>' +
+        '<span class="import-preview-meta">' + h(parts.join(' · ')) + '</span></div>';
+    }).join('');
+    if (count > MAX_PREVIEW) html += '<div class="import-preview-more">and ' + (count - MAX_PREVIEW) + ' more&hellip;</div>';
+    document.getElementById('importPreviewList').innerHTML = html;
+    const affectedTeamIds = new Set(_pendingImport.map(p => p._autoTeam || currentTeam).filter(Boolean));
+    const existingCount = Array.from(affectedTeamIds).reduce((s, tid) => s + (allPatients[tid] || []).length, 0);
+    document.getElementById('importAddBtn').textContent = 'Add to teams';
+    document.getElementById('importReplaceBtn').textContent =
+      existingCount ? 'Replace (' + existingCount + ' existing)' : 'Import as new list';
+    const _dupNoteEl = document.getElementById('importDupNote');
+    if (_dupNoteEl) _dupNoteEl.innerHTML = '';
+    document.getElementById('importModal').classList.add('open');
+    return;
+  }
+
+  const existing = patients.length;
   let html = _pendingImport.slice(0, MAX_PREVIEW).map(p => {
     const name  = [p.firstName, p.lastName].filter(Boolean).join(' ') || '(no name)';
     const parts = [];
@@ -2635,6 +3043,46 @@ function handleImportOverlayClick(e) {
 }
 
 function doImport(replace) {
+  if (compartment === 'surgical') {
+    const groups = {};
+    _pendingImport.forEach(p => {
+      const tid = p._autoTeam || currentTeam;
+      if (!groups[tid]) groups[tid] = [];
+      groups[tid].push(p);
+    });
+    if (replace) {
+      Object.keys(groups).forEach(tid => {
+        const existing = allPatients[tid] || [];
+        if (existing.length) {
+          pushUndo({ type: 'clear_all', patients: deepClone(existing), teamId: tid, desc: 'replaced surgical patients' });
+          existing.forEach(p => deletePatientFromServer(p.pid, tid));
+          allPatients[tid] = [];
+        }
+      });
+    } else {
+      Object.keys(groups).forEach(tid => {
+        const nhis = new Set((allPatients[tid] || []).filter(p => p.nhi).map(p => p.nhi.trim().toUpperCase()));
+        groups[tid] = groups[tid].filter(p => !p.nhi || !nhis.has(p.nhi.trim().toUpperCase()));
+      });
+    }
+    let total = 0;
+    Object.entries(groups).forEach(([tid, pts]) => {
+      if (!allPatients[tid]) allPatients[tid] = [];
+      pts.forEach(p => {
+        const newP = { ...p, pid: newPid(), teamId: tid };
+        delete newP._autoTeam;
+        allPatients[tid].unshift(newP);
+        savePatient(newP.pid);
+        total++;
+      });
+      stampTeamEdit(tid);
+    });
+    patients = getTeamPatients(currentTeam);
+    render(); closeImportModal(); checkDuplicates();
+    showToast(total + ' patient' + (total !== 1 ? 's' : '') + ' imported');
+    return;
+  }
+
   let skipped = [];
   if (replace) {
     const saved = deepClone(patients);
@@ -2806,7 +3254,17 @@ function parseHandoverSheetCSV(text) {
 }
 
 function exportHandoverSheet() {
-  window.location.href = '/api/export?team=' + encodeURIComponent(currentTeam);
+  if (compartment === 'surgical') {
+    const team = teams.find(t => t.id === currentTeam);
+    const params = new URLSearchParams({
+      team: currentTeam,
+      teamName: team ? team.name : currentTeam,
+      compartment: 'surgical',
+    });
+    window.location.href = '/api/export?' + params.toString();
+  } else {
+    window.location.href = '/api/export?team=' + encodeURIComponent(currentTeam);
+  }
 }
 
 const HANDOVER_DIFF_FIELD_LABELS = {
@@ -3193,7 +3651,9 @@ async function doSignOut() {
   try { _teamLastEdited = JSON.parse(localStorage.getItem('gm_team_edited') || '{}'); } catch(_) {}
 
   await loadFromServer();
+  updateCompartmentUI();
   renderTeamTabs();
+  renderFilterBar();
   render();
   checkDuplicates();
   startAutoRefresh();
