@@ -2,6 +2,91 @@
    SURGICAL COMPARTMENT
    ================================================================ */
 
+/* ---- POD / OP-DATE HELPERS ---- */
+function _todayMidnight() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function computePOD(opDate) {
+  if (!opDate) return '';
+  const parts = opDate.split('-').map(Number);
+  if (parts.length < 3) return '';
+  const op = new Date(parts[0], parts[1] - 1, parts[2]);
+  op.setHours(0, 0, 0, 0);
+  const diff = Math.floor((_todayMidnight() - op) / 86400000);
+  return diff < 0 ? 0 : diff;
+}
+
+function opDateFromPOD(n) {
+  const d = _todayMidnight();
+  d.setDate(d.getDate() - n);
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+function fmtOpDate(isoDate) {
+  if (!isoDate) return '';
+  const parts = isoDate.split('-').map(Number);
+  if (parts.length < 3) return '';
+  return parts[2] + '/' + parts[1];
+}
+
+function parseDMtoISO(dmStr) {
+  if (!dmStr) return '';
+  const parts = dmStr.split('/');
+  if (parts.length < 2) return '';
+  const day = parseInt(parts[0], 10);
+  const mon = parseInt(parts[1], 10);
+  if (isNaN(day) || isNaN(mon) || day < 1 || day > 31 || mon < 1 || mon > 12) return '';
+  const today = _todayMidnight();
+  let year = today.getFullYear();
+  const candidate = new Date(year, mon - 1, day);
+  candidate.setHours(0, 0, 0, 0);
+  if (candidate > today) year--;
+  return year + '-' + String(mon).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+}
+
+function setSurgPod(pid, val) {
+  const p = findPatient(pid);
+  if (!p) return;
+  const trimmed = val.trim();
+  if (trimmed === '') {
+    p.opDate = '';
+  } else {
+    const n = parseInt(trimmed, 10);
+    if (!isNaN(n) && n >= 0) p.opDate = opDateFromPOD(n);
+  }
+  savePatient(pid);
+  const card = qpid(pid);
+  if (!card) return;
+  const podInp = card.querySelector('.surg-pod-inp');
+  if (podInp) {
+    const computed = computePOD(p.opDate);
+    podInp.value = computed !== '' ? String(computed) : '';
+  }
+  const opInp = card.querySelector('.surg-opdate-inp');
+  if (opInp) opInp.value = fmtOpDate(p.opDate);
+}
+
+function setSurgOpDate(pid, val) {
+  const p = findPatient(pid);
+  if (!p) return;
+  p.opDate = parseDMtoISO(val.trim());
+  savePatient(pid);
+  const card = qpid(pid);
+  if (!card) return;
+  const podInp = card.querySelector('.surg-pod-inp');
+  if (podInp) {
+    const computed = computePOD(p.opDate);
+    podInp.value = computed !== '' ? String(computed) : '';
+  }
+  const opInp = card.querySelector('.surg-opdate-inp');
+  if (opInp) opInp.value = fmtOpDate(p.opDate);
+}
+
 function switchCompartment(comp) {
   if (compartment === comp) return;
   if (compartment === 'surgical') {
@@ -80,7 +165,8 @@ function setSurgFilter(consultant) {
 }
 
 function surgCardHTML(p) {
-  const pid = p.pid;
+  const pid     = p.pid;
+  const livePOD = computePOD(p.opDate || '');
   const consultants = getTeamConsultants(p.teamId);
   const smoOptions = consultants.slice();
   if (p.smo && !smoOptions.includes(p.smo)) smoOptions.push(p.smo);
@@ -129,8 +215,12 @@ function surgCardHTML(p) {
               ' oninput="setField(\'' + pid + '\',\'doa\',this.value)">' +
             '<span class="hdr-demog-sep">&middot;</span>' +
             '<span class="hdr-meta-lbl">POD</span>' +
-            '<input class="hdr-inp surg-pod-inp" type="text" inputmode="numeric" value="' + h(p.pod || '') + '" placeholder="—"' +
-              ' oninput="setField(\'' + pid + '\',\'pod\',this.value)">' +
+            '<input class="hdr-inp surg-pod-inp" type="text" inputmode="numeric" value="' + (livePOD !== '' ? String(livePOD) : '') + '" placeholder="—"' +
+              ' onchange="setSurgPod(\'' + pid + '\',this.value)">' +
+            '<span class="hdr-demog-sep">&middot;</span>' +
+            '<span class="hdr-meta-lbl">Op</span>' +
+            '<input class="hdr-inp surg-opdate-inp" type="text" value="' + h(fmtOpDate(p.opDate || '')) + '" placeholder="—" maxlength="6"' +
+              ' onchange="setSurgOpDate(\'' + pid + '\',this.value)">' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -197,7 +287,7 @@ function csvRowToSurgPatient(row) {
     smo,
     _autoTeam:   autoTeam,
     doa:         parseSurgAdmissionDate(row['admission date'] || ''),
-    pod:         '',
+    opDate:      '',
     problemList: '',
     background:  '',
     results:     '',
@@ -356,6 +446,24 @@ function diffSurgXlsx(rows) {
         fieldChanges.push({ key: f.key, label: f.label, oldVal: oldVal, newVal: newVal });
       }
     });
+
+    // POD → opDate: read POD from XLSX and convert to an opDate change
+    var xlsxPodStr = row.pod ? String(row.pod).trim() : '';
+    if (xlsxPodStr !== '') {
+      var xlsxPod = parseInt(xlsxPodStr, 10);
+      if (!isNaN(xlsxPod) && xlsxPod >= 0) {
+        var currentPOD   = computePOD(existing.opDate);
+        var currentPODStr = currentPOD !== '' ? String(currentPOD) : '';
+        if (String(xlsxPod) !== currentPODStr) {
+          fieldChanges.push({
+            key: '_pod_opdate', label: 'POD',
+            oldVal: currentPODStr, newVal: String(xlsxPod),
+            _opDate: opDateFromPOD(xlsxPod),
+          });
+        }
+      }
+    }
+
     if (fieldChanges.length > 0) {
       updates.push({ existing: existing, row: row, fieldChanges: fieldChanges });
     }
@@ -470,6 +578,8 @@ function createSurgXlsxPatient(idx) {
   var tid = teamSelEl ? teamSelEl.value
     : (row.suggestedTeam || (surgTeams[0] && surgTeams[0].id) || currentTeam);
 
+  var rowPod   = row.pod ? parseInt(String(row.pod).trim(), 10) : NaN;
+  var rowOpDate = (!isNaN(rowPod) && rowPod >= 0) ? opDateFromPOD(rowPod) : '';
   var p = {
     pid: newPid(), teamId: tid, compartment: 'surgical',
     firstName: row.firstName || '', lastName: row.lastName || '',
@@ -477,7 +587,7 @@ function createSurgXlsxPatient(idx) {
     age: row.age || '', gender: row.gender || '', genderOther: '',
     nhi: row.nhi || '', ward: 'Surgical',
     bed: row.bed || '', smo: row.smo || '',
-    doa: row.doa || '', pod: row.pod || '',
+    doa: row.doa || '', opDate: rowOpDate,
     problemList: row.problemList || '', background: row.background || '',
     results: row.results || '', plan: row.plan || '',
   };
@@ -506,7 +616,10 @@ function applySurgXlsxImport() {
 
   diff.updates.forEach(function(u) {
     var p = u.existing;
-    u.fieldChanges.forEach(function(fc) { p[fc.key] = fc.newVal; });
+    u.fieldChanges.forEach(function(fc) {
+      if (fc.key === '_pod_opdate') { p.opDate = fc._opDate; }
+      else { p[fc.key] = fc.newVal; }
+    });
     savePatient(p.pid);
     affectedTeams.add(p.teamId);
     count++;

@@ -100,6 +100,7 @@ function normalizePatients() {
       if (p.smo         === undefined) p.smo         = '';
       if (p.doa         === undefined) p.doa         = '';
       if (p.pod         === undefined) p.pod         = '';
+      if (p.opDate      === undefined) p.opDate      = '';
       if (p.title       === undefined) p.title       = '';
       if (p.age         === undefined) p.age         = '';
       if (p.gender      === undefined) p.gender      = '';
